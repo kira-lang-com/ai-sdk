@@ -1,0 +1,151 @@
+import Foundation
+
+// OpenAI: GPT-4o (2024-11-20) (openai/gpt-4o-2024-11-20)
+let Gpt4o20241120: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4o"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4o-2024-11-20"
+        }
+    ]
+}
+
+// OpenAI: GPT-4o (2024-08-06) (openai/gpt-4o-2024-08-06)
+let Gpt4o20240806: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4o"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4o-2024-08-06"
+        }
+    ]
+}
+
+// OpenAI: GPT-4o-mini (openai/gpt-4o-mini)
+let Gpt4oMini: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4o"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4o-mini"
+        }
+    ]
+}
+
+// OpenAI: GPT-4o-mini (2024-07-18) (openai/gpt-4o-mini-2024-07-18)
+let Gpt4oMini20240718: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4o"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4o-mini-2024-07-18"
+        }
+    ]
+}
+
+// OpenAI: GPT-4o (openai/gpt-4o)
+let Gpt4o: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4o"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4o"
+        }
+    ]
+}
+
+// OpenAI: GPT-4o (2024-05-13) (openai/gpt-4o-2024-05-13)
+let Gpt4o20240513: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4o"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4o-2024-05-13"
+        }
+    ]
+}

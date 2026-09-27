@@ -1,0 +1,26 @@
+import Foundation
+
+// Anthropic: Claude 3 Haiku (anthropic/claude-3-haiku)
+let ClaudeHaiku3: Model = Model {
+    identity: ModelIdentity {
+        provider: .Anthropic,
+        family: .Claude,
+        variant: .Some(.Haiku),
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "anthropic/claude-3-haiku"
+        }
+    ]
+}

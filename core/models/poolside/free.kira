@@ -1,0 +1,15 @@
+import Foundation
+
+let LagunaS21Free: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "poolside/laguna-s-2.1:free"
+}
+
+let LagunaXS21Free: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "poolside/laguna-xs-2.1:free"
+}

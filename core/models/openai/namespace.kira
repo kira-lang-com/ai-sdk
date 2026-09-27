@@ -1,0 +1,109 @@
+namespace AI.Models.OpenAI.GPT {
+    let 4 = Gpt4
+    let 4.1 = Gpt41
+    let 5 = Gpt5
+    let 5.1 = Gpt51
+    let 5.2 = Gpt52
+    let 5.4 = Gpt54
+    let 5.5 = Gpt55
+    let 6 = Gpt6Astra
+    let ChatLatest = GptChatLatest
+    let FourO = Gpt4o
+}
+
+namespace AI.Providers.OpenAI.GPT.3.5 {
+    let Turbo = Gpt35Turbo
+    let Turbo0613 = Gpt35Turbo0613
+    let Turbo16k = Gpt35Turbo16k
+    let TurboInstruct = Gpt35TurboInstruct
+}
+
+namespace AI.Providers.OpenAI.GPT.4 {
+    let Turbo = Gpt4Turbo
+    let TurboPreview = Gpt4TurboPreview
+}
+
+namespace AI.Providers.OpenAI.GPT.4.1 {
+    let Mini = Gpt41Mini
+    let Nano = Gpt41Nano
+}
+
+namespace AI.Providers.OpenAI.GPT.FourO {
+    let 20240513 = Gpt4o20240513
+    let 20240806 = Gpt4o20240806
+    let 20241120 = Gpt4o20241120
+    let Mini = Gpt4oMini
+    let Mini20240718 = Gpt4oMini20240718
+}
+
+namespace AI.Providers.OpenAI.GPT.5 {
+    let Mini = Gpt5Mini
+    let Nano = Gpt5Nano
+    let Pro = Gpt5Pro
+}
+
+namespace AI.Providers.OpenAI.GPT.5.1 {
+    let Codex = Gpt51Codex
+    let CodexMax = Gpt51CodexMax
+    let CodexMini = Gpt51CodexMini
+}
+
+namespace AI.Providers.OpenAI.GPT.5.2 {
+    let Chat = Gpt52Chat
+    let Codex = Gpt52Codex
+    let Pro = Gpt52Pro
+}
+
+namespace AI.Providers.OpenAI.GPT.5.3 {
+    let Codex = Gpt53Codex
+}
+
+namespace AI.Providers.OpenAI.GPT.5.4 {
+    let Mini = Gpt54Mini
+    let Nano = Gpt54Nano
+    let Pro = Gpt54Pro
+}
+
+namespace AI.Providers.OpenAI.GPT.5.5 {
+    let Pro = Gpt55Pro
+}
+
+namespace AI.Providers.OpenAI.GPT.5.6 {
+    let Luna = Gpt56Luna
+    let LunaPro = Gpt56LunaPro
+    let Sol = Gpt56Sol
+    let SolPro = Gpt56SolPro
+    let Terra = Gpt56Terra
+    let TerraPro = Gpt56TerraPro
+}
+
+namespace AI.Providers.OpenAI.GPT.6 {
+    let Astra = Gpt6Astra
+    let AstraPro = Gpt6AstraPro
+}
+
+namespace AI.Providers.OpenAI.GPT.Oss {
+    let Oss120b = GptOss120b
+    let Oss20b = GptOss20b
+    let OssSafeguard20b = GptOssSafeguard20b
+}
+
+namespace AI.Models.OpenAI.O {
+    let 1 = O1
+    let 3 = O3
+}
+
+namespace AI.Providers.OpenAI.O.1 {
+    let Pro = O1Pro
+}
+
+namespace AI.Providers.OpenAI.O.3 {
+    let Mini = O3Mini
+    let MiniHigh = O3MiniHigh
+    let Pro = O3Pro
+}
+
+namespace AI.Providers.OpenAI.O.4 {
+    let Mini = O4Mini
+    let MiniHigh = O4MiniHigh
+}

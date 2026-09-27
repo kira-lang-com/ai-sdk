@@ -1,0 +1,101 @@
+import Foundation
+
+// Qwen2.5 72B Instruct (qwen/qwen-2.5-72b-instruct)
+let Qwen2572bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen-2.5-72b-instruct"
+        }
+    ]
+}
+
+// Qwen: Qwen2.5 7B Instruct (qwen/qwen-2.5-7b-instruct)
+let Qwen257bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen-2.5-7b-instruct"
+        }
+    ]
+}
+
+// Qwen2.5 Coder 32B Instruct (qwen/qwen-2.5-coder-32b-instruct)
+let Qwen25Coder32bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: false,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen-2.5-coder-32b-instruct"
+        }
+    ]
+}
+
+// Qwen: Qwen2.5 VL 72B Instruct (qwen/qwen2.5-vl-72b-instruct)
+let Qwen25Vl72bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen2.5-vl-72b-instruct"
+        }
+    ]
+}

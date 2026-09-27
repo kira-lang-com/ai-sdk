@@ -1,0 +1,26 @@
+namespace AI.Models.Anthropic.Claude.Fable {
+    let 5 = ClaudeFable5
+    let 5.1 = ClaudeFable51
+}
+
+namespace AI.Models.Anthropic.Claude.Haiku {
+    let 3 = ClaudeHaiku3
+    let 4.5 = ClaudeHaiku45
+}
+
+namespace AI.Models.Anthropic.Claude.Opus {
+    let 4 = ClaudeOpus4
+    let 4.1 = ClaudeOpus41
+    let 4.5 = ClaudeOpus45
+    let 4.6 = ClaudeOpus46
+    let 4.7 = ClaudeOpus47
+    let 4.8 = ClaudeOpus48
+    let 5 = ClaudeOpus5
+}
+
+namespace AI.Models.Anthropic.Claude.Sonnet {
+    let 4 = ClaudeSonnet4
+    let 4.5 = ClaudeSonnet45
+    let 4.6 = ClaudeSonnet46
+    let 5 = ClaudeSonnet5
+}

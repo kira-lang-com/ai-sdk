@@ -1,0 +1,207 @@
+// What a model *is* — its identity and what it can do — held apart from every
+// question of where it is served.
+//
+// A `Model` names one capability surface once. The many places it can be reached
+// — OpenAI direct, OpenRouter, a Bedrock region, an Anthropic-shaped proxy — are
+// its `remoteIDs`, and none of them change what the model *is*. That separation
+// is the whole point: code selects a model by what it needs the model to do, and
+// routing decides, later and elsewhere, which endpoint answers.
+
+import Foundation
+
+// A service a model can be reached through: *where* a request goes.
+//
+// Distinct from `Protocol` on purpose. A service is a destination; a protocol is
+// the language spoken to it — and the two do not move together. OpenRouter (a
+// service) speaks the OpenAI protocol; a proxy (the Anthropic service shape) can
+// front an OpenAI model. Collapsing them would make "an OpenAI model served
+// through OpenRouter" unsayable, which is exactly the case this SDK exists for.
+enum Service {
+    OpenAI
+    Anthropic
+    OpenRouter
+    AmazonBedrock
+    Azure
+    Custom
+}
+
+// The wire dialect a backend speaks to a service: *how* bytes are shaped.
+//
+// A backend is chosen for a request when its protocol matches the binding's
+// protocol. Two services speaking `OpenAI` are reached by the same encoder with
+// a different base URL, which is why `OpenAICompatibleBackend` is one type and
+// its services are many.
+enum Protocol {
+    OpenAI
+    Anthropic
+    Bedrock
+    AzureOpenAI
+    Custom
+}
+
+// A kind of content a model reads or writes.
+//
+// Requests are validated against these before any network I/O: a model that
+// does not accept `.Image` refuses an image locally, with the model named,
+// rather than as a 400 from a service that phrases it worse.
+enum Modality {
+    Text
+    Image
+    Audio
+    Video
+    File
+    Object
+}
+
+// Who trained a model. The model's own origin, distinct from the `Service` that
+// serves it — an OpenAI model reached through OpenRouter keeps `provider:
+// .OpenAI`. `Custom` is the escape hatch for a provider the SDK does not ship
+// knowing.
+enum Provider {
+    OpenAI
+    Anthropic
+    Google
+    Baidu
+    ByteDance
+    DeepSeek
+    InclusionAI
+    Kwaipilot
+    Meituan
+    MiniMax
+    MoonshotAI
+    Qwen
+    StepFun
+    Tencent
+    ThinkingMachines
+    Nvidia
+    Xiaomi
+    ZAI
+    Custom
+}
+
+// A model's family — the line it belongs to. `Custom` for one the SDK does not
+// name.
+enum Family {
+    GPT
+    O
+    Claude
+    Gemini
+    Gemma
+    DeepSeek
+    ERNIE
+    GLM
+    Hunyuan
+    KAT
+    Kimi
+    Ling
+    LongCat
+    // MiniMax's M-series: M1, M2, M3.
+    M
+    MiniMax
+    // Thinking Machines' Inkling line.
+    Inkling
+    Nemotron
+    Qwen
+    Seed
+    Step
+    MiMo
+    UITars
+    Custom
+}
+
+// The specific model within a family and version. Optional on a `ModelIdentity`,
+// because a bare family release may have none.
+enum Variant {
+    Sol
+    Luna
+    Terra
+    Opus
+    Sonnet
+    Haiku
+    Fable
+    Small
+    Ultra
+}
+
+// What a model is, independent of any endpoint.
+//
+// `provider`, `family`, and `variant` are enums — the stable, closed axes the
+// SDK ships a name for. `version` is a `String`, because a version is the open
+// axis: every release adds one, and a model built at a call site against a live
+// service carries whatever the service calls it. Typing it would force an enum
+// edit for a value the compiler can check nothing about. `variant` is optional
+// because not every family release has one.
+struct ModelIdentity {
+    let provider: Provider
+    let family: Family
+    let variant: Option<Variant>
+    let version: String
+}
+
+// What a model can do.
+//
+// Split from identity because capability is what a request is checked against
+// and identity is what a route is resolved by — two different questions asked at
+// two different moments. A model's `input`/`output` are the modalities it reads
+// and writes; the flags are the features a request may ask for.
+struct ModelCapabilities {
+    let input: [Modality]
+    let output: [Modality]
+
+    let streaming: Bool
+    let toolCalling: Bool
+    let structuredOutput: Bool
+    let reasoning: Bool
+    let promptCaching: Bool
+}
+
+// One place a canonical model can be reached.
+//
+// A model has many of these, and they are non-exhaustive by design: a gateway or
+// an application registers more through `RemoteCatalog` without the model
+// declaration knowing. `region` is optional — most bindings make no residency
+// claim — and when present it is what `regionCompatible` checks a backend
+// against.
+struct RemoteModelID {
+    let service: Service
+    let protocol: Protocol
+    let region: Option<Region>
+    let id: String
+}
+
+// A canonical model: one identity, one capability surface, and every endpoint
+// the SDK ships knowing about.
+//
+// A value, not a family — there is no hierarchy of models, only data that
+// differs — so it is a `struct` with two questions it can answer about itself.
+// The `remoteIDs` here are the built-in routes; `RemoteCatalog` adds the rest at
+// run time without touching this.
+struct Model {
+    let identity: ModelIdentity
+    let capabilities: ModelCapabilities
+    let remoteIDs: [RemoteModelID]
+
+    // Whether this model reads `modality` as input.
+    function acceptsInput(borrow self, modality: borrow Modality) -> Bool {
+        var index = 0
+        while index < self.capabilities.input.count {
+            if self.capabilities.input[index] == modality {
+                return true
+            }
+            index = index + 1
+        }
+        return false
+    }
+
+    // Whether this model writes `modality` as output.
+    function producesOutput(borrow self, modality: borrow Modality) -> Bool {
+        var index = 0
+        while index < self.capabilities.output.count {
+            if self.capabilities.output[index] == modality {
+                return true
+            }
+            index = index + 1
+        }
+        return false
+    }
+}

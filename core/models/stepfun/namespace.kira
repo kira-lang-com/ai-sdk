@@ -1,0 +1,4 @@
+namespace AI.Models.StepFun.Step {
+    let Flash = Step37Flash
+    let FlashV35 = Step35Flash
+}

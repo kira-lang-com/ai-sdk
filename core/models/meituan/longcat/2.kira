@@ -1,0 +1,26 @@
+import Foundation
+
+// Meituan: LongCat 2.0 (meituan/longcat-2.0)
+let LongCat20: Model = Model {
+    identity: ModelIdentity {
+        provider: .Meituan,
+        family: .LongCat,
+        variant: .None,
+        version: "2.0"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "meituan/longcat-2.0"
+        }
+    ]
+}

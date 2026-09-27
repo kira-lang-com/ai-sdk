@@ -1,0 +1,57 @@
+namespace AI.Models.Google.Gemini {
+    let 2.5 = Gemini25Pro
+    let 3 = Gemini3FlashPreview
+}
+
+namespace AI.Providers.Google.Gemini.2.5 {
+    let Flash = Gemini25Flash
+    let FlashLite = Gemini25FlashLite
+    let Pro = Gemini25Pro
+    let ProPreview = Gemini25ProPreview
+    let ProPreview0506 = Gemini25ProPreview0506
+}
+
+namespace AI.Providers.Google.Gemini.3 {
+    let FlashPreview = Gemini3FlashPreview
+}
+
+namespace AI.Providers.Google.Gemini.3.1 {
+    let FlashLite = Gemini31FlashLite
+    let FlashLitePreview = Gemini31FlashLitePreview
+    let ProPreview = Gemini31ProPreview
+    let ProPreviewCustomTools = Gemini31ProPreviewCustomTools
+}
+
+namespace AI.Providers.Google.Gemini.3.5 {
+    let Flash = Gemini35Flash
+    let FlashLite = Gemini35FlashLite
+}
+
+namespace AI.Providers.Google.Gemini.3.6 {
+    let Flash = Gemini36Flash
+}
+
+namespace AI.Providers.Google.Gemini.3.7 {
+    let Flash = Gemini37Flash
+}
+
+namespace AI.Providers.Google.Gemini.3.8 {
+    let Flash = Gemini38Flash
+}
+
+namespace AI.Providers.Google.Gemma.2 {
+    let Gemma27bIt = Gemma227bIt
+}
+
+namespace AI.Providers.Google.Gemma.3 {
+    let Gemma12bIt = Gemma312bIt
+    let Gemma27bIt = Gemma327bIt
+    let Gemma4bIt = Gemma34bIt
+}
+
+namespace AI.Providers.Google.Gemma.4 {
+    let Gemma26bA4bIt = Gemma426bA4bIt
+    let Gemma31bIt = Gemma431bIt
+    let Gemma26bA4bItFree = Gemma426bA4bItFree
+    let Gemma31bItFree = Gemma431bItFree
+}

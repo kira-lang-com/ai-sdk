@@ -1,0 +1,10 @@
+namespace AI.Models.MiniMax.MiniMax {
+    let M01 = MiniMax01
+    let M1 = MiniMaxM1
+    let M2 = MiniMaxM2
+    let M21 = MiniMaxM21
+    let M25 = MiniMaxM25
+    let M27 = MiniMaxM27
+    let M2Her = MiniMaxM2Her
+    let M3 = MiniMaxM3
+}

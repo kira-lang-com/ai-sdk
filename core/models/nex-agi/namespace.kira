@@ -1,0 +1,4 @@
+namespace AI.Providers.NexAGI {
+    let N25MiniFree = NexN25MiniFree
+    let N25ProFree = NexN25ProFree
+}

@@ -1,0 +1,26 @@
+import Foundation
+
+// Tencent: Hunyuan A13B Instruct (tencent/hunyuan-a13b-instruct)
+let HunyuanA13bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Tencent,
+        family: .Hunyuan,
+        variant: .None,
+        version: "a13b"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "tencent/hunyuan-a13b-instruct"
+        }
+    ]
+}

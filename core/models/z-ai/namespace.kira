@@ -1,0 +1,16 @@
+namespace AI.Models.ZAI.GLM {
+    let Air = GLM45Air
+    let Base = GLM53
+    let BaseV45 = GLM45
+    let BaseV46 = GLM46
+    let BaseV47 = GLM47
+    let BaseV5 = GLM5
+    let BaseV51 = GLM51
+    let BaseV52 = GLM52
+    let Flash = GLM53Flash
+    let FlashV47 = GLM47Flash
+    let Turbo = GLM5Turbo
+    let V = GLM46v
+    let VTurbo = GLM5vTurbo
+    let VV45 = GLM45v
+}

@@ -1,0 +1,6 @@
+namespace AI.Models.InclusionAI.Ling {
+    let Flash = Ling30Flash
+    let FlashFin = Ling30FlashFin
+    let FlashFinFree = Ling30FlashFinFree
+    let FlashSanteFree = Ling30FlashSanteFree
+}

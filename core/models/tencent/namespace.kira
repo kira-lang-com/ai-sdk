@@ -1,0 +1,9 @@
+namespace AI.Models.Tencent.Hunyuan {
+    let Base = Hy3
+    let Instruct = HunyuanA13bInstruct
+    let Model18b = HyMt218b
+    let Model30bA3b = HyMt230bA3b
+    let Model7b = HyMt27b
+    let Preview = Hy4Preview
+    let PreviewV3 = Hy3Preview
+}

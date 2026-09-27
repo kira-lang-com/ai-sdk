@@ -1,0 +1,26 @@
+import Foundation
+
+// ByteDance: UI-TARS 7B  (bytedance/ui-tars-1.5-7b)
+let UITars157b: Model = Model {
+    identity: ModelIdentity {
+        provider: .ByteDance,
+        family: .UITars,
+        variant: .None,
+        version: "1.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "bytedance/ui-tars-1.5-7b"
+        }
+    ]
+}

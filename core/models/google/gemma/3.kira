@@ -1,0 +1,76 @@
+import Foundation
+
+// Google: Gemma 3 12B (google/gemma-3-12b-it)
+let Gemma312bIt: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemma,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemma-3-12b-it"
+        }
+    ]
+}
+
+// Google: Gemma 3 27B (google/gemma-3-27b-it)
+let Gemma327bIt: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemma,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemma-3-27b-it"
+        }
+    ]
+}
+
+// Google: Gemma 3 4B (google/gemma-3-4b-it)
+let Gemma34bIt: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemma,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemma-3-4b-it"
+        }
+    ]
+}

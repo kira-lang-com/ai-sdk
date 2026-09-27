@@ -1,0 +1,15 @@
+import Foundation
+
+let InklingSmallFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "thinkingmachines/inkling-small:free"
+}
+
+let InklingFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "thinkingmachines/inkling:free"
+}

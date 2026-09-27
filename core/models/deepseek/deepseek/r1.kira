@@ -1,0 +1,76 @@
+import Foundation
+
+// DeepSeek: R1 (deepseek/deepseek-r1)
+let DeepSeekR1: Model = Model {
+    identity: ModelIdentity {
+        provider: .DeepSeek,
+        family: .DeepSeek,
+        variant: .None,
+        version: "r1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "deepseek/deepseek-r1"
+        }
+    ]
+}
+
+// DeepSeek: R1 0528 (deepseek/deepseek-r1-0528)
+let DeepSeekR10528: Model = Model {
+    identity: ModelIdentity {
+        provider: .DeepSeek,
+        family: .DeepSeek,
+        variant: .None,
+        version: "r1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "deepseek/deepseek-r1-0528"
+        }
+    ]
+}
+
+// DeepSeek: R1 Distill Llama 70B (deepseek/deepseek-r1-distill-llama-70b)
+let DeepSeekR1DistillLlama70b: Model = Model {
+    identity: ModelIdentity {
+        provider: .DeepSeek,
+        family: .DeepSeek,
+        variant: .None,
+        version: "r1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "deepseek/deepseek-r1-distill-llama-70b"
+        }
+    ]
+}

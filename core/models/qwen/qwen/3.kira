@@ -1,0 +1,1126 @@
+import Foundation
+
+// Qwen: Qwen3 14B (qwen/qwen3-14b)
+let Qwen314b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-14b"
+        }
+    ]
+}
+
+// Qwen: Qwen3 235B A22B (qwen/qwen3-235b-a22b)
+let Qwen3235bA22b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-235b-a22b"
+        }
+    ]
+}
+
+// Qwen: Qwen3 235B A22B Instruct 2507 (qwen/qwen3-235b-a22b-2507)
+let Qwen3235bA22b2507: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-235b-a22b-2507"
+        }
+    ]
+}
+
+// Qwen: Qwen3 235B A22B Thinking 2507 (qwen/qwen3-235b-a22b-thinking-2507)
+let Qwen3235bA22bThinking2507: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-235b-a22b-thinking-2507"
+        }
+    ]
+}
+
+// Qwen: Qwen3 30B A3B (qwen/qwen3-30b-a3b)
+let Qwen330bA3b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-30b-a3b"
+        }
+    ]
+}
+
+// Qwen: Qwen3 30B A3B Instruct 2507 (qwen/qwen3-30b-a3b-instruct-2507)
+let Qwen330bA3bInstruct2507: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-30b-a3b-instruct-2507"
+        }
+    ]
+}
+
+// Qwen: Qwen3 30B A3B Thinking 2507 (qwen/qwen3-30b-a3b-thinking-2507)
+let Qwen330bA3bThinking2507: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-30b-a3b-thinking-2507"
+        }
+    ]
+}
+
+// Qwen: Qwen3 32B (qwen/qwen3-32b)
+let Qwen332b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-32b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.5-122B-A10B (qwen/qwen3.5-122b-a10b)
+let Qwen35122bA10b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.5-122b-a10b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.5-27B (qwen/qwen3.5-27b)
+let Qwen3527b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.5-27b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.5-35B-A3B (qwen/qwen3.5-35b-a3b)
+let Qwen3535bA3b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.5-35b-a3b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.5 397B A17B (qwen/qwen3.5-397b-a17b)
+let Qwen35397bA17b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.5-397b-a17b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.5-9B (qwen/qwen3.5-9b)
+let Qwen359b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.5-9b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.5-Flash (qwen/qwen3.5-flash-02-23)
+let Qwen35Flash0223: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.5-flash-02-23"
+        }
+    ]
+}
+
+// Qwen: Qwen3.5 Plus 2026-02-15 (qwen/qwen3.5-plus-02-15)
+let Qwen35Plus0215: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.5-plus-02-15"
+        }
+    ]
+}
+
+// Qwen: Qwen3.5 Plus 2026-04-20 (qwen/qwen3.5-plus-20260420)
+let Qwen35Plus20260420: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.5-plus-20260420"
+        }
+    ]
+}
+
+// Qwen: Qwen3.6 27B (qwen/qwen3.6-27b)
+let Qwen3627b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.6"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.6-27b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.6 35B A3B (qwen/qwen3.6-35b-a3b)
+let Qwen3635bA3b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.6"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.6-35b-a3b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.6 Flash (qwen/qwen3.6-flash)
+let Qwen36Flash: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.6"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.6-flash"
+        }
+    ]
+}
+
+// Qwen: Qwen3.6 Max Preview (qwen/qwen3.6-max-preview)
+let Qwen36MaxPreview: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.6"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.6-max-preview"
+        }
+    ]
+}
+
+// Qwen: Qwen3.6 Plus (qwen/qwen3.6-plus)
+let Qwen36Plus: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.6"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.6-plus"
+        }
+    ]
+}
+
+// Qwen: Qwen3.7 Flash (qwen/qwen3.7-flash)
+let Qwen37Flash: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.7"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.7-flash"
+        }
+    ]
+}
+
+// Qwen: Qwen3.7 Max (qwen/qwen3.7-max)
+let Qwen37Max: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.7"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.7-max"
+        }
+    ]
+}
+
+// Qwen: Qwen3.7 Plus (qwen/qwen3.7-plus)
+let Qwen37Plus: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.7"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.7-plus"
+        }
+    ]
+}
+
+// Qwen: Qwen3.8 2.4T A95B (qwen/qwen3.8-2.4t-a95b)
+let Qwen3824tA95b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.8"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.8-2.4t-a95b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.8 27B (qwen/qwen3.8-27b)
+let Qwen3827b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.8"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.8-27b"
+        }
+    ]
+}
+
+// Qwen: Qwen3 8B (qwen/qwen3-8b)
+let Qwen38b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-8b"
+        }
+    ]
+}
+
+// Qwen: Qwen3.8 Flash (qwen/qwen3.8-flash)
+let Qwen38Flash: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.8"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.8-flash"
+        }
+    ]
+}
+
+// Qwen: Qwen3.8 Max (0902) (qwen/qwen3.8-max-0902)
+let Qwen38Max0902: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3.8"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3.8-max-0902"
+        }
+    ]
+}
+
+// Qwen: Qwen3 Coder 480B A35B (qwen/qwen3-coder)
+let Qwen3Coder: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-coder"
+        }
+    ]
+}
+
+// Qwen: Qwen3 Coder 30B A3B Instruct (qwen/qwen3-coder-30b-a3b-instruct)
+let Qwen3Coder30bA3bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-coder-30b-a3b-instruct"
+        }
+    ]
+}
+
+// Qwen: Qwen3 Coder Flash (qwen/qwen3-coder-flash)
+let Qwen3CoderFlash: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-coder-flash"
+        }
+    ]
+}
+
+// Qwen: Qwen3 Coder Next (qwen/qwen3-coder-next)
+let Qwen3CoderNext: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-coder-next"
+        }
+    ]
+}
+
+// Qwen: Qwen3 Coder Plus (qwen/qwen3-coder-plus)
+let Qwen3CoderPlus: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-coder-plus"
+        }
+    ]
+}
+
+// Qwen: Qwen3 Max (qwen/qwen3-max)
+let Qwen3Max: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-max"
+        }
+    ]
+}
+
+// Qwen: Qwen3 Max Thinking (qwen/qwen3-max-thinking)
+let Qwen3MaxThinking: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-max-thinking"
+        }
+    ]
+}
+
+// Qwen: Qwen3 Next 80B A3B Instruct (qwen/qwen3-next-80b-a3b-instruct)
+let Qwen3Next80bA3bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-next-80b-a3b-instruct"
+        }
+    ]
+}
+
+// Qwen: Qwen3 Next 80B A3B Thinking (qwen/qwen3-next-80b-a3b-thinking)
+let Qwen3Next80bA3bThinking: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-next-80b-a3b-thinking"
+        }
+    ]
+}
+
+// Qwen: Qwen3 VL 235B A22B Instruct (qwen/qwen3-vl-235b-a22b-instruct)
+let Qwen3Vl235bA22bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-vl-235b-a22b-instruct"
+        }
+    ]
+}
+
+// Qwen: Qwen3 VL 235B A22B Thinking (qwen/qwen3-vl-235b-a22b-thinking)
+let Qwen3Vl235bA22bThinking: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-vl-235b-a22b-thinking"
+        }
+    ]
+}
+
+// Qwen: Qwen3 VL 30B A3B Instruct (qwen/qwen3-vl-30b-a3b-instruct)
+let Qwen3Vl30bA3bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-vl-30b-a3b-instruct"
+        }
+    ]
+}
+
+// Qwen: Qwen3 VL 30B A3B Thinking (qwen/qwen3-vl-30b-a3b-thinking)
+let Qwen3Vl30bA3bThinking: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-vl-30b-a3b-thinking"
+        }
+    ]
+}
+
+// Qwen: Qwen3 VL 32B Instruct (qwen/qwen3-vl-32b-instruct)
+let Qwen3Vl32bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-vl-32b-instruct"
+        }
+    ]
+}
+
+// Qwen: Qwen3 VL 8B Instruct (qwen/qwen3-vl-8b-instruct)
+let Qwen3Vl8bInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-vl-8b-instruct"
+        }
+    ]
+}
+
+// Qwen: Qwen3 VL 8B Thinking (qwen/qwen3-vl-8b-thinking)
+let Qwen3Vl8bThinking: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen3-vl-8b-thinking"
+        }
+    ]
+}

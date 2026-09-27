@@ -1,0 +1,4 @@
+namespace AI.Models.Kwaipilot.KAT {
+    let CoderProV2 = KATCoderProV2
+    let CoderProV25 = KATCoderProV25
+}

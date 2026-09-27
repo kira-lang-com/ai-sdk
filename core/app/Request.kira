@@ -1,0 +1,136 @@
+// A request, a response, what it cost, and the ways it can go wrong — the values
+// that cross the `Backend` seam in both directions.
+//
+// The example these grew from raised exceptions for a bad route or an
+// unsupported modality. Kira answers with values: a `Gateway` returns
+// `Result<Response, AIError>`, and the errors that would have been thrown are
+// variants of `AIError`. A caller matches them the way it matches any other
+// outcome, and nothing unwinds.
+
+import Foundation
+
+// One generation request, in canonical form.
+//
+// `outputSchema` present asks for structured output against that schema;
+// `providerOptions` is an escape hatch for a service-specific knob the canonical
+// surface does not name, passed through untouched. Both are optional because the
+// common request needs neither.
+struct Request {
+    let model: Model
+    let messages: [Message]
+    let tools: [Tool]
+    let outputSchema: Option<Schema>
+    let providerOptions: Option<JsonValue>
+}
+
+// What a generation cost.
+//
+// Every field is optional because not every service reports every number, and a
+// `0` that means "not reported" reads exactly like a `0` that means "none" —
+// which is the bug this avoids. `cost` is the service's own figure when it gives
+// one, not a number this SDK computes from a price table it would have to keep
+// current.
+struct Usage {
+    let inputTokens: Option<Int>
+    let outputTokens: Option<Int>
+    let cachedTokens: Option<Int>
+    let reasoningTokens: Option<Int>
+    let cost: Option<Float>
+}
+
+// A completion.
+//
+// Carries the `model` it came from so a caller holding only the response knows
+// what answered — which matters when the model was selected dynamically.
+// `providerMetadata` keeps whatever the service returned that has no canonical
+// home, so nothing is silently dropped on the way up.
+struct Response {
+    let model: Model
+    let output: [Output]
+    let usage: Usage
+    let finishReason: FinishReason
+    let providerMetadata: Option<JsonValue>
+}
+
+// Why a request produced no usable answer.
+//
+// Routing failures and transport failures share one enum because a `Gateway`
+// call can end in either, and a caller wants one thing to match. The transport
+// half mirrors the shape a real backend already found worth distinguishing:
+// never-reached, reached-and-refused, refused-with-a-message, answered-something
+// -unreadable, and ran-out-of-room.
+enum AIError {
+    // No configured backend can serve this model: nothing matched service,
+    // protocol, and region together.
+    NoRoute(ModelIdentity)
+    // The model cannot do what the request asked — tool calling, streaming — and
+    // the string names which.
+    UnsupportedCapability(String)
+    // The request sent a modality the model does not read.
+    UnsupportedInputModality(Modality)
+    // The service was never reached: a negative code from the network library.
+    Transport(Int)
+    // An HTTP status with no error document to explain it.
+    Status(Int)
+    // The service's own error text, which is the one worth showing a user.
+    ServiceError(String)
+    // A body that is not the document this expects.
+    Malformed(String)
+    // The answer ran out of room before it said anything.
+    Truncated(Int)
+}
+
+// Whether a request is one this model can answer, checked before any network
+// I/O.
+//
+// Answers with the first problem, or `.None` when there is none. Local because
+// the model may have been selected at run time, where the compiler could not
+// know its capabilities — so the check that a static request gets for free, a
+// dynamic one gets here, with the model named and before a byte is sent.
+function validateRequest(request: borrow Request) -> Option<AIError> {
+    // Only the parts a caller sends are checked against what the model reads: an
+    // assistant turn and a tool result are the conversation being replayed, not
+    // a new modality the model has to accept. A model that produced an output
+    // can be handed it back.
+    var messageIndex = 0
+    while messageIndex < request.messages.count {
+        match request.messages[messageIndex] {
+            User(parts) -> {
+                var index = 0
+                while index < parts.count {
+                    let modality = inputModality(parts[index])
+                    if !request.model.acceptsInput(modality) {
+                        return .Some(.UnsupportedInputModality(modality))
+                    }
+                    index = index + 1
+                }
+            }
+            Assistant(_) -> {}
+            ToolResults(_) -> {}
+        }
+        messageIndex = messageIndex + 1
+    }
+    if request.tools.count > 0 && !request.model.capabilities.toolCalling {
+        return .Some(.UnsupportedCapability("tool-calling"))
+    }
+    match request.outputSchema {
+        Some(_) -> {
+            if !request.model.capabilities.structuredOutput {
+                return .Some(.UnsupportedCapability("structured-output"))
+            }
+        }
+        None -> {}
+    }
+    return .None
+}
+
+// The modality one input part carries.
+function inputModality(part: borrow Input) -> Modality {
+    match part {
+        Text(_) -> return .Text
+        Image(_) -> return .Image
+        Audio(_) -> return .Audio
+        Video(_) -> return .Video
+        File(_) -> return .File
+    }
+}

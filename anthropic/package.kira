@@ -1,0 +1,10 @@
+// The Anthropic Messages protocol: a different wire shape entirely, producing
+// the same canonical `Request` and `Response` as every other backend.
+Package AIAnthropic {
+    let version = "0.1.0"
+    let kind = .Library
+    let moduleRoot = "AIAnthropic"
+    let dependencies = [
+        Dependency { name: "AI", path: "../core" }
+    ]
+}

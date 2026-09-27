@@ -1,0 +1,64 @@
+// The front door: validate, resolve, dispatch.
+//
+// A `Gateway` is what a program calls. It checks the request against the model
+// locally, asks the `Router` which backend serves it, and hands the request
+// across — returning the completion or the first thing that went wrong. Nothing
+// above it names a backend, and nothing below it repeats the validation.
+
+import Foundation
+
+struct Gateway {
+    let router: Router
+
+    // Generate a completion for `request`, or answer with why there is none.
+    //
+    // The order is deliberate: validate before routing, route before sending.
+    // A request the model cannot answer fails here, locally, with the model
+    // named — never as a bill for a call that was doomed to be refused.
+    function generate(borrow self, request: borrow Request) -> Result<Response, AIError> {
+        match validateRequest(request) {
+            Some(problem) -> return .Error(problem)
+            None -> {}
+        }
+        match self.router.resolve(request.model) {
+            Error(problem) -> return .Error(problem)
+            Ok(route) -> return route.backend.generate(route.remoteID.id, request)
+        }
+    }
+
+    // The same request as a sequence of typed events.
+    //
+    // Streaming is a capability, so a model that does not offer it is refused
+    // here rather than at a backend that would phrase it worse — and before
+    // routing, because an unsupported request should cost nothing.
+    function stream(borrow self, request: borrow Request) -> Result<[StreamEvent], AIError> {
+        match validateRequest(request) {
+            Some(problem) -> return .Error(problem)
+            None -> {}
+        }
+        if !request.model.capabilities.streaming {
+            return .Error(.UnsupportedCapability("streaming"))
+        }
+        match self.router.resolve(request.model) {
+            Error(problem) -> return .Error(problem)
+            Ok(route) -> return route.backend.streamEvents(route.remoteID.id, request)
+        }
+    }
+}
+
+// Build a gateway over a set of backends and a catalogue.
+//
+// The common case wants no registered endpoints, so `gateway(backends)` starts
+// with an empty catalogue; `gatewayWithCatalog` is for a program that has taught
+// the SDK routes of its own.
+function gateway(backends: [Any Backend]) -> Gateway {
+    return Gateway {
+        router: Router { backends: backends, catalog: emptyCatalog() }
+    }
+}
+
+function gatewayWithCatalog(backends: [Any Backend], catalog: RemoteCatalog) -> Gateway {
+    return Gateway {
+        router: Router { backends: backends, catalog: catalog }
+    }
+}

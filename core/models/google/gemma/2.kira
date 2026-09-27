@@ -1,0 +1,26 @@
+import Foundation
+
+// Google: Gemma 2 27B (google/gemma-2-27b-it)
+let Gemma227bIt: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemma,
+        variant: .None,
+        version: "2"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemma-2-27b-it"
+        }
+    ]
+}

@@ -1,0 +1,51 @@
+import Foundation
+
+// Kwaipilot: KAT-Coder-Pro V2 (kwaipilot/kat-coder-pro-v2)
+let KATCoderProV2: Model = Model {
+    identity: ModelIdentity {
+        provider: .Kwaipilot,
+        family: .KAT,
+        variant: .None,
+        version: "2"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "kwaipilot/kat-coder-pro-v2"
+        }
+    ]
+}
+
+// Kwaipilot: KAT-Coder-Pro V2.5 (kwaipilot/kat-coder-pro-v2.5)
+let KATCoderProV25: Model = Model {
+    identity: ModelIdentity {
+        provider: .Kwaipilot,
+        family: .KAT,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "kwaipilot/kat-coder-pro-v2.5"
+        }
+    ]
+}

@@ -1,0 +1,26 @@
+import Foundation
+
+// MiniMax: MiniMax-01 (minimax/minimax-01)
+let MiniMax01: Model = Model {
+    identity: ModelIdentity {
+        provider: .MiniMax,
+        family: .MiniMax,
+        variant: .None,
+        version: "01"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: false,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "minimax/minimax-01"
+        }
+    ]
+}

@@ -1,0 +1,176 @@
+import Foundation
+
+// Z.ai: GLM 5 (z-ai/glm-5)
+let GLM5: Model = Model {
+    identity: ModelIdentity {
+        provider: .ZAI,
+        family: .GLM,
+        variant: .None,
+        version: "5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "z-ai/glm-5"
+        }
+    ]
+}
+
+// Z.ai: GLM 5.1 (z-ai/glm-5.1)
+let GLM51: Model = Model {
+    identity: ModelIdentity {
+        provider: .ZAI,
+        family: .GLM,
+        variant: .None,
+        version: "5.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "z-ai/glm-5.1"
+        }
+    ]
+}
+
+// Z.ai: GLM 5.2 (z-ai/glm-5.2)
+let GLM52: Model = Model {
+    identity: ModelIdentity {
+        provider: .ZAI,
+        family: .GLM,
+        variant: .None,
+        version: "5.2"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "z-ai/glm-5.2"
+        }
+    ]
+}
+
+// Z.ai: GLM 5.3 (z-ai/glm-5.3)
+let GLM53: Model = Model {
+    identity: ModelIdentity {
+        provider: .ZAI,
+        family: .GLM,
+        variant: .None,
+        version: "5.3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "z-ai/glm-5.3"
+        }
+    ]
+}
+
+// Z.ai: GLM 5.3 Flash (z-ai/glm-5.3-flash)
+let GLM53Flash: Model = Model {
+    identity: ModelIdentity {
+        provider: .ZAI,
+        family: .GLM,
+        variant: .None,
+        version: "5.3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "z-ai/glm-5.3-flash"
+        }
+    ]
+}
+
+// Z.ai: GLM 5 Turbo (z-ai/glm-5-turbo)
+let GLM5Turbo: Model = Model {
+    identity: ModelIdentity {
+        provider: .ZAI,
+        family: .GLM,
+        variant: .None,
+        version: "5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "z-ai/glm-5-turbo"
+        }
+    ]
+}
+
+// Z.ai: GLM 5V Turbo (z-ai/glm-5v-turbo)
+let GLM5vTurbo: Model = Model {
+    identity: ModelIdentity {
+        provider: .ZAI,
+        family: .GLM,
+        variant: .None,
+        version: "5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "z-ai/glm-5v-turbo"
+        }
+    ]
+}

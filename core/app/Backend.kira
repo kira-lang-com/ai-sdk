@@ -1,0 +1,96 @@
+// The one shape everything conforms to.
+//
+// A `Backend` is a place a request can actually be sent and an answer actually
+// read. The model being served has no say in which backend serves it — that is
+// the separation this whole SDK is built to keep — so a backend knows only three
+// things about itself (the service it is, the protocol it speaks, the region it
+// stands in) and offers two verbs (generate, stream).
+//
+// This is a construct *family*: a named surface a concrete backend promises to
+// present. `OpenAIBackend`, `AnthropicBackend`, and `OpenRouterBackend` each
+// `extends Backend` and fill it in. Routing holds them as `Any Backend` and asks
+// each one what it is; the family's required fields are readable through that
+// existential, which is what lets `Router` compare a backend to a binding
+// without knowing which concrete backend it holds.
+//
+// `service`, `protocol`, and `region` are fields rather than methods because
+// they are what a backend *is*, fixed the moment it is constructed — and a field
+// is readable through the existential exactly as a method is. `region` defaults
+// to unplaced: a backend that made no residency claim serves only bindings that
+// ask for none.
+
+import Foundation
+
+construct Backend {
+    // Where this backend sends: the destination half of a binding match.
+    @Required let service: Service
+    // The wire dialect this backend speaks: the protocol half of the match.
+    @Required let protocol: Protocol
+    // Where this backend stands, when it stands anywhere in particular. Unplaced
+    // backends serve only region-free bindings; see `regionCompatible`.
+    let region: Option<Region> = .None
+
+    // Send one request and answer with the completion, or with why there is
+    // none. `modelID` is the endpoint-specific id the route resolved to — the
+    // string this backend's service knows the model by — not the canonical
+    // identity, which the backend never sees.
+    @Required function generate(
+        modelID: borrow String,
+        request: borrow Request
+    ) -> Result<Response, AIError>
+
+    // The same request as a sequence of typed events.
+    //
+    // The events are the canonical `StreamEvent`s: a consumer switches on what
+    // arrived rather than parsing a text channel. A backend whose transport
+    // cannot yet stream incrementally still answers here — with the real events
+    // of a real completion, delivered at once rather than as they are produced —
+    // so a consumer written against the stream keeps working when incremental
+    // transport lands beneath it.
+    @Required function streamEvents(
+        modelID: borrow String,
+        request: borrow Request
+    ) -> Result<[StreamEvent], AIError>
+}
+
+// A finished response as the events that would have produced it.
+//
+// Protocol-agnostic: it reads only the canonical `Response`, so every backend
+// whose transport cannot yet stream incrementally shares this one splay rather
+// than writing its own. Text, reasoning, and audio each arrive inside a
+// `Start`/`End` bracket; a tool call arrives already resolved; the whole
+// `Response` closes the stream. A consumer written against these events is
+// correct now and stays correct when a backend gains real incremental transport.
+function streamEventsFor(response: Response) -> [StreamEvent] {
+    var events: [StreamEvent] = []
+    var index = 0
+    while index < response.output.count {
+        match response.output[index] {
+            Text(body) -> {
+                events.append(.TextStart)
+                events.append(.TextDelta(body))
+                events.append(.TextEnd)
+            }
+            Reason(reasoning) -> {
+                events.append(.ReasoningStart)
+                events.append(.ReasoningDelta(reasoning))
+                events.append(.ReasoningEnd)
+            }
+            Audio(audio) -> {
+                events.append(.AudioStart)
+                events.append(.AudioDelta(audio))
+                events.append(.AudioEnd)
+            }
+            Image(image) -> events.append(.ImageEvent(image))
+            Object(_) -> {}
+            Call(call) -> {
+                events.append(.ToolCallStart(call.name))
+                events.append(.ToolCallEnd(call))
+            }
+        }
+        index = index + 1
+    }
+    events.append(.UsageEvent(response.usage))
+    events.append(.Completed(response))
+    return events
+}

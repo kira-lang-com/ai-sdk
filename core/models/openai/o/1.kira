@@ -1,0 +1,51 @@
+import Foundation
+
+// OpenAI: o1-pro (openai/o1-pro)
+let O1Pro: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .O,
+        variant: .None,
+        version: "1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/o1-pro"
+        }
+    ]
+}
+
+// OpenAI: o1 (openai/o1)
+let O1: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .O,
+        variant: .None,
+        version: "1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/o1"
+        }
+    ]
+}

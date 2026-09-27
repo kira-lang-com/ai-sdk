@@ -1,0 +1,101 @@
+import Foundation
+
+// OpenAI: GPT-3.5 Turbo (older v0613) (openai/gpt-3.5-turbo-0613)
+let Gpt35Turbo0613: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-3.5-turbo-0613"
+        }
+    ]
+}
+
+// OpenAI: GPT-3.5 Turbo Instruct (openai/gpt-3.5-turbo-instruct)
+let Gpt35TurboInstruct: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-3.5-turbo-instruct"
+        }
+    ]
+}
+
+// OpenAI: GPT-3.5 Turbo 16k (openai/gpt-3.5-turbo-16k)
+let Gpt35Turbo16k: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-3.5-turbo-16k"
+        }
+    ]
+}
+
+// OpenAI: GPT-3.5 Turbo (openai/gpt-3.5-turbo)
+let Gpt35Turbo: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-3.5-turbo"
+        }
+    ]
+}

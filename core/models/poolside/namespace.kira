@@ -1,0 +1,4 @@
+namespace AI.Providers.Poolside {
+    let S21 = LagunaS21Free
+    let XS21 = LagunaXS21Free
+}

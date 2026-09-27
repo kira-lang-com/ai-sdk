@@ -1,0 +1,151 @@
+import Foundation
+
+// OpenAI: GPT-4 Turbo (openai/gpt-4-turbo)
+let Gpt4Turbo: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4-turbo"
+        }
+    ]
+}
+
+// OpenAI: GPT-4 Turbo Preview (openai/gpt-4-turbo-preview)
+let Gpt4TurboPreview: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4-turbo-preview"
+        }
+    ]
+}
+
+// OpenAI: GPT-4 (openai/gpt-4)
+let Gpt4: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4"
+        }
+    ]
+}
+
+// OpenAI: GPT-4.1 (openai/gpt-4.1)
+let Gpt41: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4.1"
+        }
+    ]
+}
+
+// OpenAI: GPT-4.1 Mini (openai/gpt-4.1-mini)
+let Gpt41Mini: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4.1-mini"
+        }
+    ]
+}
+
+// OpenAI: GPT-4.1 Nano (openai/gpt-4.1-nano)
+let Gpt41Nano: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "4.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/gpt-4.1-nano"
+        }
+    ]
+}

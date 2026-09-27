@@ -1,0 +1,160 @@
+// A tour of the SDK, end to end.
+//
+// The first three checks need no network: region narrowing, route selection, and
+// request validation are all decided locally, and this asserts what each
+// decides. The fourth sends a real request over TLS to the loopback service the
+// toolchain ships, so the encode/send/decode path is exercised for real on a
+// machine with no key and no internet.
+//
+//     kira run examples/demo
+
+import Foundation
+import AI
+import AIOpenAI
+import AIOpenRouter
+import AIAnthropic
+
+@Main
+function main() {
+    let run = Task { runDemo() }
+    let failures = run.await
+    if failures == 0 {
+        printLine("all checks passed")
+    } else {
+        printLine("checks failed: " + String(failures))
+    }
+    return
+}
+
+async function runDemo() -> Int {
+    var failures = 0
+
+    failures = failures + checkRegions()
+    failures = failures + checkRouting()
+    failures = failures + checkValidation()
+    failures = failures + checkLoopback()
+
+    return failures
+}
+
+// Region narrowing: a zone serves its own bucket, a bucket does not serve a
+// specific zone, and a foreign zone serves neither.
+function checkRegions() -> Int {
+    var failures = 0
+    failures = failures + expect("us-west-1 narrows US", regionNarrows(.USWest1, .US))
+    failures = failures + expect("eu-west-1 does not narrow US", !regionNarrows(.EUWest1, .US))
+    failures = failures + expect("US does not narrow us-west-1", !regionNarrows(.US, .USWest1))
+    failures = failures + expect(
+        "a region-free binding is served from anywhere",
+        regionCompatible(.Some(.EUWest1), .None)
+    )
+    return failures
+}
+
+// Route selection: with OpenAI listed before OpenRouter, an OpenAI model
+// resolves to the OpenAI endpoint — order is the preference.
+function checkRouting() -> Int {
+    var backends: [Any Backend] = []
+    backends.append(OpenAIBackend(apiKey: "sk-demo"))
+    backends.append(openRouter("or-demo"))
+    let router = Router { backends: move backends, catalog: emptyCatalog() }
+
+    let model = AI.Providers.OpenAI.GPT.5.6.Sol
+    match router.resolve(model) {
+        Ok(route) -> {
+            return expect(
+                "gpt-5.6-sol routes to OpenAI direct",
+                route.remoteID.service == .OpenAI && route.remoteID.id == "gpt-5.6-sol"
+            )
+        }
+        Error(_) -> return expect("gpt-5.6-sol resolves", false)
+    }
+}
+
+// Validation: a model that does not read video refuses a video part locally,
+// before any request is sent.
+function checkValidation() -> Int {
+    let request = Request {
+        model: AI.Providers.Anthropic.Claude.4.6.Opus,
+        messages: userTurn([.Video(VideoPart { mediaType: "video/mp4", base64: "AAAA" })]),
+        tools: [],
+        outputSchema: .None,
+        providerOptions: .None
+    }
+    match validateRequest(request) {
+        Some(_) -> return expect("video is refused for a text model", true)
+        None -> return expect("video is refused for a text model", false)
+    }
+}
+
+// One real completion against the loopback service: start it, point an
+// OpenAI-compatible backend at it, and generate. The service echoes the request,
+// so a non-empty answer means the whole encode/send/decode path ran.
+function checkLoopback() -> Int {
+    let server = httpsServer()
+    if server <= 0 {
+        printLine("skip loopback: service did not start (" + String(server) + ")")
+        return 0
+    }
+    let port = serverPort(server)
+    if port <= 0 {
+        networkClose(server)
+        printLine("skip loopback: no port (" + String(port) + ")")
+        return 0
+    }
+
+    let base = "https://127.0.0.1:" + String(port) + "/v1"
+    var backends: [Any Backend] = []
+    backends.append(OpenAICompatibleBackend(
+        baseURL: base,
+        service: .OpenAI,
+        region: .Some(.Global),
+        trustPort: port
+    ))
+    let flow = gateway(move backends)
+
+    let request = Request {
+        model: AI.Providers.OpenAI.GPT.5.6.Sol,
+        messages: userTurn([.Text(TextPart { text: "Say hello." })]),
+        tools: [],
+        outputSchema: .None,
+        providerOptions: .None
+    }
+
+    var failures = 0
+    match flow.generate(request) {
+        Ok(response) -> {
+            failures = failures + expect("loopback returned output", response.output.count > 0)
+        }
+        Error(problem) -> {
+            printLine("loopback error: " + errorText(problem))
+            failures = failures + 1
+        }
+    }
+    networkClose(server)
+    return failures
+}
+
+// Print one check's result and answer 1 when it failed, 0 when it passed.
+function expect(name: borrow String, condition: Bool) -> Int {
+    if condition {
+        printLine("  ok   " + name)
+        return 0
+    }
+    printLine("  FAIL " + name)
+    return 1
+}
+
+// A one-line description of an error, for the loopback path.
+function errorText(problem: borrow AIError) -> String {
+    match problem {
+        NoRoute(_) -> return "no route"
+        UnsupportedCapability(name) -> return "unsupported capability: " + name
+        UnsupportedInputModality(_) -> return "unsupported input"
+        Transport(code) -> return "transport " + String(code)
+        Status(status) -> return "status " + String(status)
+        ServiceError(message) -> return "service: " + message
+        Malformed(detail) -> return "malformed: " + detail
+        Truncated(budget) -> return "truncated after " + String(budget)
+    }
+}

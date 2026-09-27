@@ -1,0 +1,17 @@
+namespace AI.Models.DeepSeek.DeepSeek {
+    let Chat = DeepSeekChat
+    let Chat0324 = DeepSeekChatV30324
+    let ChatV31 = DeepSeekChatV31
+    let Exp = DeepSeekV32Exp
+    let Flash = DeepSeekV41Flash
+    let Flash0731 = DeepSeekV4Flash0731
+    let FlashVisionExp = DeepSeekV4FlashVisionExp
+    let FlashVV4 = DeepSeekV4Flash
+    let Pro = DeepSeekV4Pro
+    let Pro0813 = DeepSeekV4Pro0813
+    let R1 = DeepSeekR1
+    let R10528 = DeepSeekR10528
+    let R1DistillLlama70b = DeepSeekR1DistillLlama70b
+    let Terminus = DeepSeekV31Terminus
+    let V32 = DeepSeekV32
+}

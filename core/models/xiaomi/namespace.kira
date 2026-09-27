@@ -1,0 +1,4 @@
+namespace AI.Models.Xiaomi.MiMo {
+    let Base = MiMoV25
+    let Pro = MiMoV25Pro
+}

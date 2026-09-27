@@ -1,0 +1,124 @@
+// Choosing which backend serves a model, and letting a program teach the SDK
+// endpoints it did not ship knowing.
+//
+// A model carries the routes it was declared with. A `RemoteCatalog` holds the
+// rest — the ones a gateway or an application registers at run time — so a
+// company's internal endpoint for a public model is a `register` call, not a
+// fork of the model table. `Router.resolve` walks a model's routes against the
+// configured backends and returns the first that agrees on service, protocol,
+// and region.
+
+import Foundation
+
+// One route a program taught the SDK: a canonical identity, and an endpoint it
+// can also be reached at.
+struct CatalogEntry {
+    let identity: ModelIdentity
+    let remoteID: RemoteModelID
+}
+
+// The endpoints the SDK did not ship knowing.
+//
+// A flat list rather than a map keyed by identity: the lists are short, a lookup
+// is a walk either way, and a list needs no equality-and-hash contract on
+// `ModelIdentity` to hold — `identityEquals` is the whole comparison, in one
+// place. `register` is the only writer.
+struct RemoteCatalog {
+    var additions: [CatalogEntry]
+
+    // Every endpoint for `model`: the ones it was declared with, then the ones a
+    // program registered for its identity.
+    function remoteIDs(borrow self, model: borrow Model) -> [RemoteModelID] {
+        var result: [RemoteModelID] = []
+        var index = 0
+        while index < model.remoteIDs.count {
+            result.append(model.remoteIDs[index])
+            index = index + 1
+        }
+        index = 0
+        while index < self.additions.count {
+            if identityEquals(self.additions[index].identity, model.identity) {
+                result.append(self.additions[index].remoteID)
+            }
+            index = index + 1
+        }
+        return result
+    }
+
+    // Teach the SDK another endpoint for a model. The canonical identity does
+    // not change; only another possible route is added.
+    function register(borrow mut self, identity: ModelIdentity, remoteID: RemoteModelID) {
+        self.additions.append(CatalogEntry { identity: identity, remoteID: remoteID })
+        return
+    }
+}
+
+// An empty catalogue, the starting point a program adds to.
+function emptyCatalog() -> RemoteCatalog {
+    return RemoteCatalog { additions: [] }
+}
+
+// A resolved decision: this backend, reached at this endpoint id.
+struct Route {
+    let backend: Any Backend
+    let remoteID: RemoteModelID
+}
+
+// The configured backends and the endpoints they can reach.
+struct Router {
+    let backends: [Any Backend]
+    let catalog: RemoteCatalog
+
+    // The first backend that can serve `model`, and the endpoint id it serves it
+    // at — or `NoRoute` when nothing matches.
+    //
+    // A backend serves a binding when they agree on service and protocol and the
+    // backend's region narrows the binding's. Backends are tried in configured
+    // order and bindings in declared order, so a program expresses a preference —
+    // "OpenAI direct before OpenRouter" — by the order it lists its backends.
+    function resolve(borrow self, model: borrow Model) -> Result<Route, AIError> {
+        let remotes = self.catalog.remoteIDs(model)
+        var b = 0
+        while b < self.backends.count {
+            let backend = self.backends[b]
+            var r = 0
+            while r < remotes.count {
+                let remote = remotes[r]
+                if remote.service == backend.service
+                    && remote.protocol == backend.protocol
+                    && regionCompatible(backend.region, remote.region) {
+                    return .Ok(Route { backend: backend, remoteID: remote })
+                }
+                r = r + 1
+            }
+            b = b + 1
+        }
+        return .Error(.NoRoute(model.identity))
+    }
+}
+
+// Whether two identities name the same model.
+//
+// The whole equality in one place, so nothing depends on a derived `==` for
+// `ModelIdentity` — and `variant` is compared through its `Option`, because a
+// model with a variant and one without are different models even when provider,
+// family, and version agree.
+function identityEquals(a: borrow ModelIdentity, b: borrow ModelIdentity) -> Bool {
+    if a.provider != b.provider || a.family != b.family || a.version != b.version {
+        return false
+    }
+    match a.variant {
+        None -> {
+            match b.variant {
+                None -> return true
+                Some(_) -> return false
+            }
+        }
+        Some(aVariant) -> {
+            match b.variant {
+                None -> return false
+                Some(bVariant) -> return aVariant == bVariant
+            }
+        }
+    }
+}

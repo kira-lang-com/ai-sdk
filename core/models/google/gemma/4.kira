@@ -1,0 +1,67 @@
+import Foundation
+
+let Gemma426bA4bItFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "google/gemma-4-26b-a4b-it:free"
+}
+
+// Google: Gemma 4 26B A4B  (google/gemma-4-26b-a4b-it)
+let Gemma426bA4bIt: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemma,
+        variant: .None,
+        version: "4"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemma-4-26b-a4b-it"
+        },
+        Gemma426bA4bItFree
+    ]
+}
+
+let Gemma431bItFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "google/gemma-4-31b-it:free"
+}
+
+// Google: Gemma 4 31B (google/gemma-4-31b-it)
+let Gemma431bIt: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemma,
+        variant: .None,
+        version: "4"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemma-4-31b-it"
+        },
+        Gemma431bItFree
+    ]
+}

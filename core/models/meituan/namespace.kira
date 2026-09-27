@@ -1,0 +1,3 @@
+namespace AI.Models.Meituan.LongCat {
+    let V20 = LongCat20
+}

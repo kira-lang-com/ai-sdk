@@ -1,0 +1,8 @@
+import Foundation
+
+let Dots3NotePreviewFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "dots-studio/dots-3-note-preview:free"
+}

@@ -1,0 +1,137 @@
+// OpenRouter, as a thin layer over the OpenAI-compatible implementation.
+//
+// The encoder, the send, and the decoder are `AIOpenAI`'s — imported, not
+// copied. All this file adds is a `provider` block on the request body and a
+// title header, which is the whole of what "OpenAI-compatible, plus routing
+// controls" means. When the OpenAI encoder gains a field, OpenRouter gets it for
+// free, because there is only one encoder.
+
+import Foundation
+import AI
+import AIOpenAI
+
+// OpenRouter's provider-routing controls.
+//
+// Every field is optional: an absent one leaves OpenRouter's own default in
+// place, which is different from setting it. `providerOrder` is the preference
+// order of upstream providers; `allowFallbacks` whether to try the next one when
+// the first refuses; `dataCollection` whether providers that log prompts are
+// allowed at all.
+struct OpenRouterOptions {
+    let providerOrder: Option<[String]>
+    let allowFallbacks: Option<Bool>
+    let dataCollection: Option<Bool>
+}
+
+// Options that set nothing — the common case, every OpenRouter default left in
+// place.
+function openRouterDefaults() -> OpenRouterOptions {
+    return OpenRouterOptions {
+        providerOrder: .None,
+        allowFallbacks: .None,
+        dataCollection: .None
+    }
+}
+
+// The OpenRouter backend.
+//
+// `apiKey` and `options` are supplied at construction; everything else has a
+// default. Use `openRouter(key)` for the no-options case and
+// `openRouterWith(key, options)` when routing is configured.
+construct OpenRouterBackend() extends Backend {
+    let service: Service = .OpenRouter
+    let protocol: Protocol = .OpenAI
+    let region: Option<Region> = .Some(.Global)
+    let baseURL: String = "https://openrouter.ai/api/v1"
+    let apiKey: String
+    let options: OpenRouterOptions
+    // What OpenRouter attributes calls to on its dashboard.
+    let title: String = "Kira AI SDK"
+    let maxTokens: Int = 4096
+
+    function generate(modelID: borrow String, request: borrow Request) -> Result<Response, AIError> {
+        let body = openRouterBody(maxTokens, modelID, request, options)
+        let headers = openRouterHeaders(title)
+        return openaiSend(baseURL, apiKey, headers, 0, body, request)
+    }
+
+    function streamEvents(modelID: borrow String, request: borrow Request) -> Result<[StreamEvent], AIError> {
+        let body = openRouterBody(maxTokens, modelID, request, options)
+        let headers = openRouterHeaders(title)
+        match openaiSend(baseURL, apiKey, headers, 0, body, request) {
+            Error(problem) -> return .Error(problem)
+            Ok(response) -> return .Ok(streamEventsFor(move response))
+        }
+    }
+}
+
+// An OpenRouter backend with no routing options set.
+function openRouter(apiKey: String) -> OpenRouterBackend {
+    return OpenRouterBackend(apiKey: apiKey, options: openRouterDefaults())
+}
+
+// An OpenRouter backend with routing options.
+function openRouterWith(apiKey: String, options: OpenRouterOptions) -> OpenRouterBackend {
+    return OpenRouterBackend(apiKey: apiKey, options: options)
+}
+
+// The request body: the OpenAI members, plus a `provider` block when options ask
+// for one.
+//
+// The members come from `AIOpenAI`'s own encoder, so a message, a tool, or a
+// structured-output schema is shaped exactly as it is for a direct OpenAI call.
+// Only the extra field is this file's.
+function openRouterBody(maxTokens: Int, modelID: borrow String, request: borrow Request, options: borrow OpenRouterOptions) -> String {
+    var members = openaiRequestMembers(maxTokens, modelID, request)
+    match openRouterProvider(options) {
+        Some(provider) -> members.append(JsonMember { name: "provider", value: provider })
+        None -> {}
+    }
+    return writeJson(.Object(move members))
+}
+
+// The `provider` block for these options, or `.None` when no option is set.
+function openRouterProvider(options: borrow OpenRouterOptions) -> Option<JsonValue> {
+    var provider: [JsonMember] = []
+
+    match options.providerOrder {
+        Some(order) -> {
+            var names: [JsonValue] = []
+            var index = 0
+            while index < order.count {
+                names.append(.Text(order[index]))
+                index = index + 1
+            }
+            provider.append(JsonMember { name: "order", value: .Array(move names) })
+        }
+        None -> {}
+    }
+    match options.allowFallbacks {
+        Some(flag) -> {
+            provider.append(JsonMember { name: "allow_fallbacks", value: .Boolean(flag) })
+        }
+        None -> {}
+    }
+    match options.dataCollection {
+        Some(allow) -> {
+            var word = "deny"
+            if allow {
+                word = "allow"
+            }
+            provider.append(JsonMember { name: "data_collection", value: .Text(word) })
+        }
+        None -> {}
+    }
+
+    if provider.count == 0 {
+        return .None
+    }
+    return .Some(.Object(move provider))
+}
+
+// OpenRouter's attribution headers.
+function openRouterHeaders(title: borrow String) -> [HttpHeader] {
+    var headers: [HttpHeader] = []
+    headers.append(HttpHeader { name: "x-title", value: title })
+    return headers
+}

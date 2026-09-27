@@ -1,0 +1,62 @@
+// The OpenAI backends: what a program constructs and hands to a gateway.
+//
+// Each is a `Backend` — a single-level conformer to the core family — that holds
+// its credentials and defers the wire work to `openaiGenerate`. `OpenAIBackend`
+// pins the public base URL; `OpenAICompatibleBackend` takes one, for any
+// endpoint that speaks the same protocol (a self-hosted server, a gateway, the
+// loopback service used in tests).
+
+import Foundation
+import AI
+
+// OpenAI itself, at the public endpoint.
+construct OpenAIBackend(apiKey: String) extends Backend {
+    let service: Service = .OpenAI
+    let protocol: Protocol = .OpenAI
+    let region: Option<Region> = .Some(.Global)
+    let baseURL: String = "https://api.openai.com/v1"
+    // The ceiling on an answer, sent on every request. A field rather than a
+    // canonical `Request` value because it is a property of how this backend is
+    // used, not of what any one request says.
+    let maxTokens: Int = 4096
+
+    function generate(modelID: borrow String, request: borrow Request) -> Result<Response, AIError> {
+        let extra: [HttpHeader] = []
+        return openaiGenerate(baseURL, apiKey, extra, 0, maxTokens, modelID, request)
+    }
+
+    function streamEvents(modelID: borrow String, request: borrow Request) -> Result<[StreamEvent], AIError> {
+        let extra: [HttpHeader] = []
+        return openaiStream(baseURL, apiKey, extra, 0, maxTokens, modelID, request)
+    }
+}
+
+// Any endpoint that speaks the OpenAI protocol.
+//
+// `service` defaults to `.Custom` and `region` to unplaced, so a bare
+// `OpenAICompatibleBackend(baseURL: url, apiKey: key)` routes for models bound to
+// a custom service with no residency claim. A program pointing this at a known
+// service — a regional gateway — names that service and region and gets the same
+// matching every built-in backend gets.
+construct OpenAICompatibleBackend() extends Backend {
+    let service: Service = .Custom
+    let protocol: Protocol = .OpenAI
+    let region: Option<Region> = .None
+    let baseURL: String
+    let apiKey: String = ""
+    // A loopback server's port whose self-signed certificate to trust, or 0 to
+    // trust the public roots. This is what lets the SDK be exercised end to end
+    // against the bundled TLS service with no key and no internet.
+    let trustPort: Int = 0
+    let maxTokens: Int = 4096
+
+    function generate(modelID: borrow String, request: borrow Request) -> Result<Response, AIError> {
+        let extra: [HttpHeader] = []
+        return openaiGenerate(baseURL, apiKey, extra, trustPort, maxTokens, modelID, request)
+    }
+
+    function streamEvents(modelID: borrow String, request: borrow Request) -> Result<[StreamEvent], AIError> {
+        let extra: [HttpHeader] = []
+        return openaiStream(baseURL, apiKey, extra, trustPort, maxTokens, modelID, request)
+    }
+}

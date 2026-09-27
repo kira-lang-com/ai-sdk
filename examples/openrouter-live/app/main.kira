@@ -1,0 +1,134 @@
+// One real completion through OpenRouter, with a tool offered — end to end:
+// take a model from the catalogue, point a gateway at the live service, send a
+// prompt and a tool, and print what came back, be it text or a tool call.
+//
+//     OPENROUTER_API_KEY=sk-or-... kira run examples/openrouter-live
+//
+// With no key it prints how to set one and stops — it never sends a keyless
+// request. The model is `AI.Providers.Nvidia.Nemotron.3.Ultra`, named by
+// its namespace path exactly as any catalogue model is.
+
+import Foundation
+import AI
+import AIOpenRouter
+
+@Main
+function main() {
+    let run = Task { drive() }
+    let code = run.await
+    return
+}
+
+async function drive() -> Int {
+    let key = environmentValue("OPENROUTER_API_KEY")
+    if key == "" {
+        printLine("OPENROUTER_API_KEY is not set.")
+        printLine("Set it and run again to send one real completion:")
+        printLine("    OPENROUTER_API_KEY=sk-or-... kira run examples/openrouter-live")
+        return 0
+    }
+
+    // A small token ceiling keeps the answer short.
+    var backends: [Any Backend] = []
+    backends.append(OpenRouterBackend(apiKey: move key, options: openRouterDefaults(), maxTokens: 512))
+    let flow = gateway(move backends)
+
+    var tools: [Tool] = []
+    tools.append(weatherTool())
+
+    let request = Request {
+        model: AI.Providers.Nvidia.Nemotron.3.Ultra,
+        messages: userTurn([.Text(TextPart {
+            text: "What is the weather in Paris right now? Call the get_weather tool."
+        })]),
+        tools: move tools,
+        outputSchema: .None,
+        providerOptions: .None
+    }
+
+    printLine("sending one completion to OpenRouter (nvidia/nemotron-3-ultra-550b-a55b:free) with a tool...")
+    match flow.generate(request) {
+        Ok(response) -> {
+            describeOutputs(response.output)
+            printLine(usageLine(response.usage))
+            return 0
+        }
+        Error(problem) -> {
+            printLine("error: " + errorText(problem))
+            return 1
+        }
+    }
+}
+
+// A tool the model may call: get the weather for a city. Its input schema is an
+// ordinary JSON Schema, built as a `JsonValue` so it composes without a round
+// trip through text.
+function weatherTool() -> Tool {
+    var cityField: [JsonMember] = []
+    cityField.append(JsonMember { name: "type", value: .Text("string") })
+    cityField.append(JsonMember {
+        name: "description",
+        value: .Text("The city to get the weather for.")
+    })
+
+    var properties: [JsonMember] = []
+    properties.append(JsonMember { name: "city", value: .Object(move cityField) })
+
+    var required: [JsonValue] = []
+    required.append(.Text("city"))
+
+    var schema: [JsonMember] = []
+    schema.append(JsonMember { name: "type", value: .Text("object") })
+    schema.append(JsonMember { name: "properties", value: .Object(move properties) })
+    schema.append(JsonMember { name: "required", value: .Array(move required) })
+
+    return Tool {
+        name: "get_weather",
+        description: "Get the current weather for a city.",
+        inputSchema: Schema { json: .Object(move schema) }
+    }
+}
+
+// Print every piece the model returned: text as text, a tool call as its name
+// and the arguments the model chose.
+function describeOutputs(output: borrow [Output]) {
+    var index = 0
+    while index < output.count {
+        match output[index] {
+            Text(part) -> printLine("text: " + part.text)
+            Call(call) -> printLine("tool call: " + call.name + "(" + writeJson(call.input) + ")")
+            Reason(reasoning) -> printLine("reasoning: " + reasoning.text)
+            Image(_) -> printLine("image part")
+            Audio(_) -> printLine("audio part")
+            Object(value) -> printLine("object: " + writeJson(value))
+        }
+        index = index + 1
+    }
+    return
+}
+
+// What the completion cost, as the service reported it.
+function usageLine(usage: borrow Usage) -> String {
+    return "tokens in+out: " + optionalInt(usage.inputTokens) + "+" + optionalInt(usage.outputTokens)
+}
+
+function optionalInt(value: borrow Option<Int>) -> String {
+    match value {
+        Some(count) -> return String(count)
+        None -> return "?"
+    }
+}
+
+// A one-line description of a failure.
+function errorText(problem: borrow AIError) -> String {
+    match problem {
+        NoRoute(_) -> return "no route for this model"
+        UnsupportedCapability(name) -> return "unsupported capability: " + name
+        UnsupportedInputModality(_) -> return "unsupported input modality"
+        Transport(code) -> return "the service was not reached (network code " + String(code) + ")"
+        Status(status) -> return "the service answered " + String(status)
+        ServiceError(message) -> return "the service refused: " + message
+        Malformed(detail) -> return "the answer could not be read: " + detail
+        Truncated(budget) -> return "ran out of room after " + String(budget) + " tokens"
+    }
+}

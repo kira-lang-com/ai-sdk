@@ -1,0 +1,126 @@
+import Foundation
+
+// MiniMax: MiniMax M2 (minimax/minimax-m2)
+let MiniMaxM2: Model = Model {
+    identity: ModelIdentity {
+        provider: .MiniMax,
+        family: .MiniMax,
+        variant: .None,
+        version: "m2"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "minimax/minimax-m2"
+        }
+    ]
+}
+
+// MiniMax: MiniMax M2.1 (minimax/minimax-m2.1)
+let MiniMaxM21: Model = Model {
+    identity: ModelIdentity {
+        provider: .MiniMax,
+        family: .MiniMax,
+        variant: .None,
+        version: "m2.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "minimax/minimax-m2.1"
+        }
+    ]
+}
+
+// MiniMax: MiniMax M2.5 (minimax/minimax-m2.5)
+let MiniMaxM25: Model = Model {
+    identity: ModelIdentity {
+        provider: .MiniMax,
+        family: .MiniMax,
+        variant: .None,
+        version: "m2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "minimax/minimax-m2.5"
+        }
+    ]
+}
+
+// MiniMax: MiniMax M2.7 (minimax/minimax-m2.7)
+let MiniMaxM27: Model = Model {
+    identity: ModelIdentity {
+        provider: .MiniMax,
+        family: .MiniMax,
+        variant: .None,
+        version: "m2.7"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "minimax/minimax-m2.7"
+        }
+    ]
+}
+
+// MiniMax: MiniMax M2-her (minimax/minimax-m2-her)
+let MiniMaxM2Her: Model = Model {
+    identity: ModelIdentity {
+        provider: .MiniMax,
+        family: .MiniMax,
+        variant: .None,
+        version: "m2"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: false,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "minimax/minimax-m2-her"
+        }
+    ]
+}

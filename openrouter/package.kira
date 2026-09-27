@@ -1,0 +1,11 @@
+// OpenRouter: the OpenAI protocol, plus provider routing. Built on `AIOpenAI` —
+// it encodes with the same functions and adds one block of its own.
+Package AIOpenRouter {
+    let version = "0.1.0"
+    let kind = .Library
+    let moduleRoot = "AIOpenRouter"
+    let dependencies = [
+        Dependency { name: "AI", path: "../core" },
+        Dependency { name: "AIOpenAI", path: "../openai" }
+    ]
+}

@@ -1,0 +1,8 @@
+namespace AI.Models.ByteDance.Seed {
+    let Base = Seed16
+    let Code = Seed20Code
+    let Flash = Seed16Flash
+    let Lite = Seed20Lite
+    let Mini = Seed20Mini
+    let Turbo = Seed21Turbo
+}

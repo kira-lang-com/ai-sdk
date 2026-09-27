@@ -1,0 +1,8 @@
+import Foundation
+
+let LiquidLfm2526bFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "liquid/lfm-2.5-2.6b:free"
+}

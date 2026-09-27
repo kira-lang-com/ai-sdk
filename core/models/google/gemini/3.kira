@@ -1,0 +1,251 @@
+import Foundation
+
+// Google: Gemini 3 Flash Preview (google/gemini-3-flash-preview)
+let Gemini3FlashPreview: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3-flash-preview"
+        }
+    ]
+}
+
+// Google: Gemini 3.1 Flash Lite (google/gemini-3.1-flash-lite)
+let Gemini31FlashLite: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3.1-flash-lite"
+        }
+    ]
+}
+
+// Google: Gemini 3.1 Flash Lite Preview (google/gemini-3.1-flash-lite-preview)
+let Gemini31FlashLitePreview: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3.1-flash-lite-preview"
+        }
+    ]
+}
+
+// Google: Gemini 3.1 Pro Preview (google/gemini-3.1-pro-preview)
+let Gemini31ProPreview: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3.1-pro-preview"
+        }
+    ]
+}
+
+// Google: Gemini 3.1 Pro Preview Custom Tools (google/gemini-3.1-pro-preview-customtools)
+let Gemini31ProPreviewCustomTools: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3.1-pro-preview-customtools"
+        }
+    ]
+}
+
+// Google: Gemini 3.5 Flash (google/gemini-3.5-flash)
+let Gemini35Flash: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3.5-flash"
+        }
+    ]
+}
+
+// Google: Gemini 3.5 Flash Lite (google/gemini-3.5-flash-lite)
+let Gemini35FlashLite: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3.5-flash-lite"
+        }
+    ]
+}
+
+// Google: Gemini 3.6 Flash (google/gemini-3.6-flash)
+let Gemini36Flash: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3.6"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3.6-flash"
+        }
+    ]
+}
+
+// Google: Gemini 3.7 Flash (google/gemini-3.7-flash)
+let Gemini37Flash: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3.7"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3.7-flash"
+        }
+    ]
+}
+
+// Google: Gemini 3.8 Flash (google/gemini-3.8-flash)
+let Gemini38Flash: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "3.8"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-3.8-flash"
+        }
+    ]
+}

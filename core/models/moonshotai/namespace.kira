@@ -1,0 +1,9 @@
+namespace AI.Models.MoonshotAI.Kimi {
+    let K2 = KimiK2
+    let K20905 = KimiK20905
+    let K25 = KimiK25
+    let K26 = KimiK26
+    let K27Code = KimiK27Code
+    let K2Thinking = KimiK2Thinking
+    let K3 = KimiK3
+}

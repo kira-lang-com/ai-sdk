@@ -1,0 +1,101 @@
+import Foundation
+
+// ByteDance Seed: Seed-2.0-Code (bytedance-seed/seed-2.0-code)
+let Seed20Code: Model = Model {
+    identity: ModelIdentity {
+        provider: .ByteDance,
+        family: .Seed,
+        variant: .None,
+        version: "2.0"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "bytedance-seed/seed-2.0-code"
+        }
+    ]
+}
+
+// ByteDance Seed: Seed-2.0-Lite (bytedance-seed/seed-2.0-lite)
+let Seed20Lite: Model = Model {
+    identity: ModelIdentity {
+        provider: .ByteDance,
+        family: .Seed,
+        variant: .None,
+        version: "2.0"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "bytedance-seed/seed-2.0-lite"
+        }
+    ]
+}
+
+// ByteDance Seed: Seed-2.0-Mini (bytedance-seed/seed-2.0-mini)
+let Seed20Mini: Model = Model {
+    identity: ModelIdentity {
+        provider: .ByteDance,
+        family: .Seed,
+        variant: .None,
+        version: "2.0"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "bytedance-seed/seed-2.0-mini"
+        }
+    ]
+}
+
+// ByteDance Seed: Seed 2.1 Turbo (bytedance-seed/seed-2-1-turbo)
+let Seed21Turbo: Model = Model {
+    identity: ModelIdentity {
+        provider: .ByteDance,
+        family: .Seed,
+        variant: .None,
+        version: "2.1"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Video],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "bytedance-seed/seed-2-1-turbo"
+        }
+    ]
+}

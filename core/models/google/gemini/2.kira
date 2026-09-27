@@ -1,0 +1,126 @@
+import Foundation
+
+// Google: Gemini 2.5 Flash (google/gemini-2.5-flash)
+let Gemini25Flash: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-2.5-flash"
+        }
+    ]
+}
+
+// Google: Gemini 2.5 Flash Lite (google/gemini-2.5-flash-lite)
+let Gemini25FlashLite: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-2.5-flash-lite"
+        }
+    ]
+}
+
+// Google: Gemini 2.5 Pro (google/gemini-2.5-pro)
+let Gemini25Pro: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-2.5-pro"
+        }
+    ]
+}
+
+// Google: Gemini 2.5 Pro Preview 06-05 (google/gemini-2.5-pro-preview)
+let Gemini25ProPreview: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-2.5-pro-preview"
+        }
+    ]
+}
+
+// Google: Gemini 2.5 Pro Preview 05-06 (google/gemini-2.5-pro-preview-05-06)
+let Gemini25ProPreview0506: Model = Model {
+    identity: ModelIdentity {
+        provider: .Google,
+        family: .Gemini,
+        variant: .None,
+        version: "2.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .Audio, .Video, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "google/gemini-2.5-pro-preview-05-06"
+        }
+    ]
+}

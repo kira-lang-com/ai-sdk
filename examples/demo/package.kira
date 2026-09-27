@@ -1,0 +1,13 @@
+// A runnable tour of the SDK: routing, region narrowing, validation, and one
+// real completion against the loopback service the toolchain ships.
+Package Demo {
+    let version = "0.1.0"
+    let kind = .App
+    let moduleRoot = "Demo"
+    let dependencies = [
+        Dependency { name: "AI", path: "../../core" },
+        Dependency { name: "AIOpenAI", path: "../../openai" },
+        Dependency { name: "AIOpenRouter", path: "../../openrouter" },
+        Dependency { name: "AIAnthropic", path: "../../anthropic" }
+    ]
+}

@@ -1,0 +1,183 @@
+// The content a request carries in and a response carries out — typed all the
+// way down, so nothing above the wire ever holds a bag of untyped JSON.
+//
+// Input and output are separate enums because a model reads and writes different
+// things: you send it a video, it does not send you one back. Keeping them apart
+// makes an impossible message unspellable rather than merely unlikely.
+
+import Foundation
+
+// A run of text, in or out.
+struct TextPart {
+    let text: String
+}
+
+// An image, carried inline as base64 with its media type.
+//
+// `mediaType` travels with the bytes because a service needs it and cannot
+// always infer it, and a guess that is wrong is a decode error phrased as a
+// content error.
+struct ImagePart {
+    let mediaType: String
+    let base64: String
+}
+
+// Audio, carried the same way.
+struct AudioPart {
+    let mediaType: String
+    let base64: String
+}
+
+// Video, carried the same way.
+struct VideoPart {
+    let mediaType: String
+    let base64: String
+}
+
+// A file handed to the model by name and bytes.
+struct FilePart {
+    let name: String
+    let mediaType: String
+    let base64: String
+}
+
+// The model's own reasoning, when it exposes it as content distinct from the
+// answer. Kept as its own part so a caller can show it, log it, or drop it
+// without parsing the answer to find where thinking ended.
+struct Reasoning {
+    let text: String
+}
+
+// A JSON Schema, as the document a tool or a structured-output request is shaped
+// by. Held as a `JsonValue` — the parsed shape Foundation already speaks — so it
+// is composed and emitted without a round trip through text.
+struct Schema {
+    let json: JsonValue
+}
+
+// A tool a model may call: a name, a sentence telling the model when to reach
+// for it, and the schema its arguments must satisfy.
+struct Tool {
+    let name: String
+    let description: String
+    let inputSchema: Schema
+}
+
+// A model's request to call a tool. `input` is the arguments it chose, still as
+// JSON because they are the tool's shape, not this SDK's.
+struct ToolCall {
+    let id: String
+    let name: String
+    let input: JsonValue
+}
+
+// The result of running a tool, to be handed back on the next turn. `id` ties it
+// to the `ToolCall` it answers.
+struct ToolResult {
+    let id: String
+    let output: JsonValue
+}
+
+// One piece of what a caller sends.
+//
+// A request's input is a list of these, so text and an image go in one message
+// in the order they were written, and a model that reads both sees both.
+enum Input {
+    Text(TextPart)
+    Image(ImagePart)
+    Audio(AudioPart)
+    Video(VideoPart)
+    File(FilePart)
+}
+
+// One turn in a conversation, named by who produced it.
+//
+// A request is no longer one thing said once: an agent sends the whole exchange
+// so far, because a model that called a tool has to see its own call and the
+// result before it can carry on. The three roles carry different things — a user
+// sends input parts, the assistant produced output parts (text and the tool
+// calls it chose), a tool turn carries the results those calls asked for — so
+// this is an enum over the role rather than a struct with a role field and a
+// content type that would have to be all three at once. An impossible turn, like
+// a tool result the assistant never asked for, is unspellable rather than merely
+// discouraged.
+//
+// `Assistant` carries `[Output]` — the exact list a prior `Response` produced —
+// so replaying a turn is handing back what came out, not rebuilding it. A
+// backend encodes each role in its own wire shape; a caller never writes one.
+enum Message {
+    User([Input])
+    Assistant([Output])
+    ToolResults([ToolResult])
+}
+
+// The one-turn conversation a plain prompt is: a single user message carrying
+// these parts. The common request has no history, and this is how it says so
+// without spelling the enum at every call site.
+function userTurn(input: [Input]) -> [Message] {
+    var messages: [Message] = []
+    messages.append(.User(move input))
+    return messages
+}
+
+// One piece of what a model returns.
+//
+// `Object` is a structured-output answer — the JSON the model was asked to
+// produce — and `Call` is a tool invocation. A single response may carry several
+// of these: reasoning, then text, then a tool call.
+enum Output {
+    Text(TextPart)
+    Image(ImagePart)
+    Audio(AudioPart)
+    Object(JsonValue)
+    Call(ToolCall)
+    Reason(Reasoning)
+}
+
+// Why generation stopped.
+//
+// Separate from any error type because most of these are not errors: `Completed`
+// is the good case, and `ToolCall` means the model wants to act, not that it
+// failed. Only `Refusal` and `Error` are failures, and a caller does different
+// things about each of the six.
+enum FinishReason {
+    Completed
+    Length
+    ToolCall
+    Refusal
+    Error
+    Cancelled
+}
+
+// One event in a stream.
+//
+// A stream is not a stream of text — it is a stream of typed events, so a
+// consumer switches on what arrived rather than parsing a text channel for
+// structure that was thrown away. Text arrives as a `Start`/`Delta`/`End`
+// bracket so a consumer knows a run began and ended; the same shape carries
+// reasoning and audio. `Completed` closes the stream with the assembled
+// `Response`, so a consumer that only wants the whole answer waits for one
+// event.
+enum StreamEvent {
+    TextStart
+    TextDelta(TextPart)
+    TextEnd
+
+    ReasoningStart
+    ReasoningDelta(Reasoning)
+    ReasoningEnd
+
+    AudioStart
+    AudioDelta(AudioPart)
+    AudioEnd
+
+    ImageEvent(ImagePart)
+    VideoEvent(VideoPart)
+
+    ToolCallStart(String)
+    ToolCallDelta(JsonValue)
+    ToolCallEnd(ToolCall)
+
+    UsageEvent(Usage)
+    Completed(Response)
+}

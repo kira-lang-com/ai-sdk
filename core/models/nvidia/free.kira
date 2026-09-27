@@ -1,0 +1,36 @@
+import Foundation
+
+let Nemotron3NanoOmni30bA3bReasoningFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
+}
+
+let Nemotron3Super120bFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "nvidia/nemotron-3-super-120b-a12b:free"
+}
+
+let Nemotron3Ultra550bFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "nvidia/nemotron-3-ultra-550b-a55b:free"
+}
+
+let Nemotron35ContentSafetyFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "nvidia/nemotron-3.5-content-safety:free"
+}
+
+let Nemotron35LightningFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "nvidia/nemotron-3.5-lightning:free"
+}

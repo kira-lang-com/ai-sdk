@@ -1,0 +1,76 @@
+import Foundation
+
+// Tencent: Hy-MT2-1.8B (tencent/hy-mt2-1.8b)
+let HyMt218b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Tencent,
+        family: .Hunyuan,
+        variant: .None,
+        version: "mt2"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: false,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "tencent/hy-mt2-1.8b"
+        }
+    ]
+}
+
+// Tencent: Hy-MT2-30B-A3B (tencent/hy-mt2-30b-a3b)
+let HyMt230bA3b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Tencent,
+        family: .Hunyuan,
+        variant: .None,
+        version: "mt2"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "tencent/hy-mt2-30b-a3b"
+        }
+    ]
+}
+
+// Tencent: Hy-MT2-7B (tencent/hy-mt2-7b)
+let HyMt27b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Tencent,
+        family: .Hunyuan,
+        variant: .None,
+        version: "mt2"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "tencent/hy-mt2-7b"
+        }
+    ]
+}

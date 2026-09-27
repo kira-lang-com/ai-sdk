@@ -1,0 +1,26 @@
+import Foundation
+
+// Baidu: ERNIE 4.5 VL 424B A47B  (baidu/ernie-4.5-vl-424b-a47b)
+let Ernie45Vl424bA47b: Model = Model {
+    identity: ModelIdentity {
+        provider: .Baidu,
+        family: .ERNIE,
+        variant: .None,
+        version: "4.5"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image],
+        output: [.Text],
+        streaming: true,
+        toolCalling: false,
+        structuredOutput: false,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "baidu/ernie-4.5-vl-424b-a47b"
+        }
+    ]
+}

@@ -1,0 +1,10 @@
+namespace AI.Providers.Nvidia.Nemotron.3 {
+    let NanoOmni30bA3bReasoningFree = Nemotron3NanoOmni30bA3bReasoningFree
+    let Super120bFree = Nemotron3Super120bFree
+    let Ultra550bFree = Nemotron3Ultra550bFree
+}
+
+namespace AI.Providers.Nvidia.Nemotron.3.5 {
+    let ContentSafetyFree = Nemotron35ContentSafetyFree
+    let LightningFree = Nemotron35LightningFree
+}

@@ -1,0 +1,4 @@
+namespace AI.Providers.ThinkingMachines.Inkling {
+    let SmallFree = InklingSmallFree
+    let Free = InklingFree
+}

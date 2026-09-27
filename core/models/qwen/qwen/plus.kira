@@ -1,0 +1,51 @@
+import Foundation
+
+// Qwen: Qwen-Plus (qwen/qwen-plus)
+let QwenPlus: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "plus"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen-plus"
+        }
+    ]
+}
+
+// Qwen: Qwen Plus 0728 (qwen/qwen-plus-2025-07-28)
+let QwenPlus20250728: Model = Model {
+    identity: ModelIdentity {
+        provider: .Qwen,
+        family: .Qwen,
+        variant: .None,
+        version: "plus"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "qwen/qwen-plus-2025-07-28"
+        }
+    ]
+}

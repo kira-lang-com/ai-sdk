@@ -1,0 +1,11 @@
+// A live harness: one real completion through OpenRouter. Needs
+// OPENROUTER_API_KEY in the environment; with none it says so and stops.
+Package ORLive {
+    let version = "0.1.0"
+    let kind = .App
+    let moduleRoot = "ORLive"
+    let dependencies = [
+        Dependency { name: "AI", path: "../../core" },
+        Dependency { name: "AIOpenRouter", path: "../../openrouter" }
+    ]
+}

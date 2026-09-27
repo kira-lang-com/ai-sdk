@@ -1,0 +1,101 @@
+import Foundation
+
+// OpenAI: o3 Pro (openai/o3-pro)
+let O3Pro: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .O,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: false
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/o3-pro"
+        }
+    ]
+}
+
+// OpenAI: o3 (openai/o3)
+let O3: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .O,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/o3"
+        }
+    ]
+}
+
+// OpenAI: o3 Mini High (openai/o3-mini-high)
+let O3MiniHigh: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .O,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/o3-mini-high"
+        }
+    ]
+}
+
+// OpenAI: o3 Mini (openai/o3-mini)
+let O3Mini: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .O,
+        variant: .None,
+        version: "3"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: true,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter, protocol: .OpenAI,
+            region: .Some(.Global), id: "openai/o3-mini"
+        }
+    ]
+}

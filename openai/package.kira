@@ -1,0 +1,10 @@
+// The OpenAI wire protocol: canonical requests in, canonical responses out, the
+// chat-completions shape in between. `AIOpenRouter` builds on this same file.
+Package AIOpenAI {
+    let version = "0.1.0"
+    let kind = .Library
+    let moduleRoot = "AIOpenAI"
+    let dependencies = [
+        Dependency { name: "AI", path: "../core" }
+    ]
+}

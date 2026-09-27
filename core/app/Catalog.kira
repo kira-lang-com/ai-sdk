@@ -1,0 +1,313 @@
+// The models the SDK ships knowing, each as one canonical identity with every
+// endpoint it can be reached at.
+//
+// A model is a namespace member — `AI.Providers.OpenAI.GPT.5.6.Sol` — so the
+// path reads as what the model *is*: provider, family, version, variant. The
+// version is a numeric path segment, which the language reads as one segment
+// exactly as it reads `5.6` as one number. The separation the SDK is built on
+// shows here plainly: `Sol` is an *OpenAI* model, and one of its endpoints is an
+// Anthropic-shaped proxy — the model's provider and the service it happens to be
+// served through are different facts, and the second never edits the first.
+
+import Foundation
+
+namespace AI.Providers.OpenAI.GPT.5.6 {
+    // The full multimodal surface.
+    let Sol = Model {
+        identity: ModelIdentity {
+            provider: .OpenAI,
+            family: .GPT,
+            variant: .Some(.Sol),
+            version: "5.6"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text, .Image, .Audio, .Video, .File],
+            output: [.Text, .Image, .Audio],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: true
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .OpenAI, protocol: .OpenAI,
+                region: .Some(.Global), id: "gpt-5.6-sol"
+            },
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "openai/gpt-5.6-sol"
+            },
+            RemoteModelID {
+                service: .AmazonBedrock, protocol: .Bedrock,
+                region: .Some(.US), id: "openai.gpt-5.6-sol-v1:0"
+            },
+            RemoteModelID {
+                service: .AmazonBedrock, protocol: .Bedrock,
+                region: .Some(.USWest1), id: "us-west-1.openai.gpt-5.6-sol-v1:0"
+            },
+            RemoteModelID {
+                service: .Azure, protocol: .AzureOpenAI,
+                region: .Some(.US), id: "gpt-56-sol"
+            },
+            // Still an OpenAI model; it just happens to be served through an
+            // Anthropic-style proxy.
+            RemoteModelID {
+                service: .Anthropic, protocol: .Anthropic,
+                region: .Some(.Global), id: "proxy.openai.gpt-5.6-sol"
+            }
+        ]
+    }
+
+    // Text out, a smaller multimodal input.
+    let Luna = Model {
+        identity: ModelIdentity {
+            provider: .OpenAI,
+            family: .GPT,
+            variant: .Some(.Luna),
+            version: "5.6"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text, .Image, .Audio],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: true
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .OpenAI, protocol: .OpenAI,
+                region: .Some(.Global), id: "gpt-5.6-luna"
+            },
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "openai/gpt-5.6-luna"
+            }
+        ]
+    }
+}
+
+namespace AI.Providers.Anthropic.Claude.4.6 {
+    let Opus = Model {
+        identity: ModelIdentity {
+            provider: .Anthropic,
+            family: .Claude,
+            variant: .Some(.Opus),
+            version: "4.6"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text, .Image, .File],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: true
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .Anthropic, protocol: .Anthropic,
+                region: .Some(.Global), id: "claude-opus-4-6"
+            },
+            RemoteModelID {
+                service: .AmazonBedrock, protocol: .Bedrock,
+                region: .Some(.US), id: "anthropic.claude-opus-4-6-v1:0"
+            },
+            RemoteModelID {
+                service: .AmazonBedrock, protocol: .Bedrock,
+                region: .Some(.EU), id: "eu.anthropic.claude-opus-4-6-v1:0"
+            },
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "anthropic/claude-opus-4.6"
+            }
+        ]
+    }
+}
+
+namespace AI.Providers.Anthropic.Claude.5.6 {
+    let Fable = Model {
+        identity: ModelIdentity {
+            provider: .Anthropic,
+            family: .Claude,
+            variant: .Some(.Fable),
+            version: "5.6"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text, .Image, .File],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: true
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .Anthropic, protocol: .Anthropic,
+                region: .Some(.Global), id: "claude-fable-5-6"
+            },
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "anthropic/claude-fable-5.6"
+            }
+        ]
+    }
+}
+
+namespace AI.Providers.MiniMax {
+    // MiniMax M-series, served through OpenRouter.
+    let M1 = Model {
+        identity: ModelIdentity {
+            provider: .MiniMax,
+            family: .M,
+            variant: .None,
+            version: "m1"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: false
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "minimax/minimax-m1"
+            }
+        ]
+    }
+
+    let M2 = Model {
+        identity: ModelIdentity {
+            provider: .MiniMax,
+            family: .M,
+            variant: .None,
+            version: "m2"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: false
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "minimax/minimax-m2"
+            }
+        ]
+    }
+
+    let M3 = Model {
+        identity: ModelIdentity {
+            provider: .MiniMax,
+            family: .M,
+            variant: .None,
+            version: "m3"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: false
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "minimax/minimax-m3"
+            }
+        ]
+    }
+}
+
+namespace AI.Providers.ThinkingMachines.Inkling {
+    // A small, free model served through OpenRouter.
+    let Small = Model {
+        identity: ModelIdentity {
+            provider: .ThinkingMachines,
+            family: .Inkling,
+            variant: .Some(.Small),
+            version: "1"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: false,
+            promptCaching: false
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "thinkingmachines/inkling-small:free"
+            }
+        ]
+    }
+}
+
+namespace AI.Providers.Nvidia.Nemotron.3 {
+    // NVIDIA's Nemotron 3 Super, free through OpenRouter — smaller than Ultra,
+    // and so more often reachable when the largest free endpoints are saturated.
+    let Super = Model {
+        identity: ModelIdentity {
+            provider: .Nvidia,
+            family: .Nemotron,
+            variant: .Some(.Small),
+            version: "3-super"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: false
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "nvidia/nemotron-3-super-120b-a12b:free"
+            }
+        ]
+    }
+
+    // NVIDIA's Nemotron 3 Ultra, free through OpenRouter.
+    let Ultra = Model {
+        identity: ModelIdentity {
+            provider: .Nvidia,
+            family: .Nemotron,
+            variant: .Some(.Ultra),
+            version: "3"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: false
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .OpenRouter, protocol: .OpenAI,
+                region: .Some(.Global), id: "nvidia/nemotron-3-ultra-550b-a55b:free"
+            }
+        ]
+    }
+}
