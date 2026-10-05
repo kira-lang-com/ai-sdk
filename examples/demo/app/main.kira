@@ -19,9 +19,9 @@ function main() {
     let run = Task { runDemo() }
     let failures = run.await
     if failures == 0 {
-        printLine("all checks passed")
+        print("all checks passed")
     } else {
-        printLine("checks failed: " + String(failures))
+        print("checks failed: " + String(failures))
     }
     return
 }
@@ -93,13 +93,13 @@ function checkValidation() -> Int {
 function checkLoopback() -> Int {
     let server = httpsServer()
     if server <= 0 {
-        printLine("skip loopback: service did not start (" + String(server) + ")")
+        print("skip loopback: service did not start (" + String(server) + ")")
         return 0
     }
     let port = serverPort(server)
     if port <= 0 {
         networkClose(server)
-        printLine("skip loopback: no port (" + String(port) + ")")
+        print("skip loopback: no port (" + String(port) + ")")
         return 0
     }
 
@@ -127,7 +127,7 @@ function checkLoopback() -> Int {
             failures = failures + expect("loopback returned output", response.output.count > 0)
         }
         Error(problem) -> {
-            printLine("loopback error: " + errorText(problem))
+            print("loopback error: " + errorText(problem))
             failures = failures + 1
         }
     }
@@ -138,10 +138,10 @@ function checkLoopback() -> Int {
 // Print one check's result and answer 1 when it failed, 0 when it passed.
 function expect(name: borrow String, condition: Bool) -> Int {
     if condition {
-        printLine("  ok   " + name)
+        print("  ok   " + name)
         return 0
     }
-    printLine("  FAIL " + name)
+    print("  FAIL " + name)
     return 1
 }
 

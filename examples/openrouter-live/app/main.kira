@@ -22,9 +22,9 @@ function main() {
 async function drive() -> Int {
     let key = environmentValue("OPENROUTER_API_KEY")
     if key == "" {
-        printLine("OPENROUTER_API_KEY is not set.")
-        printLine("Set it and run again to send one real completion:")
-        printLine("    OPENROUTER_API_KEY=sk-or-... kira run examples/openrouter-live")
+        print("OPENROUTER_API_KEY is not set.")
+        print("Set it and run again to send one real completion:")
+        print("    OPENROUTER_API_KEY=sk-or-... kira run examples/openrouter-live")
         return 0
     }
 
@@ -46,15 +46,15 @@ async function drive() -> Int {
         providerOptions: .None
     }
 
-    printLine("sending one completion to OpenRouter (nvidia/nemotron-3-ultra-550b-a55b:free) with a tool...")
+    print("sending one completion to OpenRouter (nvidia/nemotron-3-ultra-550b-a55b:free) with a tool...")
     match flow.generate(request) {
         Ok(response) -> {
             describeOutputs(response.output)
-            printLine(usageLine(response.usage))
+            print(usageLine(response.usage))
             return 0
         }
         Error(problem) -> {
-            printLine("error: " + errorText(problem))
+            print("error: " + errorText(problem))
             return 1
         }
     }
@@ -95,12 +95,12 @@ function describeOutputs(output: borrow [Output]) {
     var index = 0
     while index < output.count {
         match output[index] {
-            Text(part) -> printLine("text: " + part.text)
-            Call(call) -> printLine("tool call: " + call.name + "(" + writeJson(call.input) + ")")
-            Reason(reasoning) -> printLine("reasoning: " + reasoning.text)
-            Image(_) -> printLine("image part")
-            Audio(_) -> printLine("audio part")
-            Object(value) -> printLine("object: " + writeJson(value))
+            Text(part) -> print("text: " + part.text)
+            Call(call) -> print("tool call: " + call.name + "(" + writeJson(call.input) + ")")
+            Reason(reasoning) -> print("reasoning: " + reasoning.text)
+            Image(_) -> print("image part")
+            Audio(_) -> print("audio part")
+            Object(value) -> print("object: " + writeJson(value))
         }
         index = index + 1
     }
