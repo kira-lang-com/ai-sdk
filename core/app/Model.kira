@@ -134,7 +134,7 @@ enum Variant {
 struct ModelIdentity {
     let provider: Provider
     let family: Family
-    let variant: Option<Variant>
+    let variant: Variant?
     let version: String
 }
 
@@ -165,7 +165,7 @@ struct ModelCapabilities {
 struct RemoteModelID {
     let service: Service
     let protocol: Protocol
-    let region: Option<Region>
+    let region: Region?
     let id: String
 }
 
@@ -183,25 +183,11 @@ struct Model {
 
     // Whether this model reads `modality` as input.
     function acceptsInput(borrow self, modality: borrow Modality) -> Bool {
-        var index = 0
-        while index < self.capabilities.input.count {
-            if self.capabilities.input[index] == modality {
-                return true
-            }
-            index = index + 1
-        }
-        return false
+        return capabilities.input.contains(modality)
     }
 
     // Whether this model writes `modality` as output.
     function producesOutput(borrow self, modality: borrow Modality) -> Bool {
-        var index = 0
-        while index < self.capabilities.output.count {
-            if self.capabilities.output[index] == modality {
-                return true
-            }
-            index = index + 1
-        }
-        return false
+        return capabilities.output.contains(modality)
     }
 }

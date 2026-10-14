@@ -1,7 +1,11 @@
 // The canonical layer: what a model *is*, what a request *says*, and the one
-// backend shape everything else conforms to. Nothing here knows a wire format.
-Package AI {
-    let version = "0.1.0"
-    let kind = .Library
-    let moduleRoot = "AI"
+// backend shape everything else conforms to. Nothing here knows a wire format;
+// the bytes travel through `Network`, which the gateway drives.
+construct AI extends Package {
+    let version: String = "0.2.0"
+    let kind: PackageKind = .Library
+    let moduleRoot: String = "AI"
+    let dependencies: [Dependency] = [
+        Dependency { name: "Network", path: "../../klf-kira/languages/kira/libraries/Network" }
+    ]
 }

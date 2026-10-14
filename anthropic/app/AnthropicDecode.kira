@@ -1,0 +1,152 @@
+// Reading what the Messages API sends back: a whole message, an error
+// document, or the events of a streamed message.
+
+import Foundation
+import AI
+import Network as Net
+
+// A whole answer, or the error document that came instead.
+function anthropicDecode(
+    status: Number,
+    body: borrow [UN8],
+    model: borrow Model
+) -> Result<Response, AIError> {
+    if !succeeded(status) && body.count == 0 { return .Error(.Status(status)) }
+    let document = match parseBody(body) {
+        Ok(value) -> value
+        Error(problem) -> {
+            // An error status with a body that is not JSON (a proxy's HTML
+            // page) is still the status.
+            if !succeeded(status) { return .Error(.Status(status)) }
+            return .Error(problem)
+        }
+    }
+    if jsonText(document, "type") == "error" || !succeeded(status) {
+        return .Error(anthropicFailure(status, document))
+    }
+    var assembly = StreamAssembly { model: copy model }
+    for block in jsonItems(document, "content") {
+        match jsonText(block, "type") {
+            "text" -> assembly.output.append(.Text(TextPart { text: jsonText(block, "text") }))
+            "thinking" -> assembly.output.append(
+                .Reason(
+                    Reasoning {
+                        text: jsonText(block, "thinking"),
+                        signature: jsonOptionalText(block, "signature")
+                    }
+                )
+            )
+            "tool_use" -> assembly.output.append(
+                .Call(
+                    ToolCall {
+                        id: jsonText(block, "id"),
+                        name: jsonText(block, "name"),
+                        input: jsonAt(block, "input")
+                    }
+                )
+            )
+            // Redacted thinking and blocks newer than this decoder carry
+            // nothing a caller can read.
+            else -> {}
+        }
+    }
+    assembly.report(anthropicUsage(jsonAt(document, "usage")))
+    assembly.finish = .Some(anthropicFinish(jsonText(document, "stop_reason")))
+    assembly.servedModel = jsonOptionalText(document, "model")
+    return assembly.completion()
+}
+
+// The service's error document as a failure.
+function anthropicFailure(status: Number, document: borrow JsonValue) -> AIError {
+    let error = jsonAt(document, "error")
+    let message = jsonText(error, "message")
+    if message.count == 0 { return .Status(status) }
+    return .Service(
+        ServiceFailure { status: status, kind: jsonText(error, "type"), message: message }
+    )
+}
+
+// One event of a streamed message (the Messages API's streaming events).
+// Each content block is a run keyed by its index.
+function anthropicEvent(
+    event: borrow Net.ServerEvent,
+    assembly: borrow mut StreamAssembly
+) -> Result<[StreamEvent], AIError> {
+    if event.name == "ping" { return .Ok([]) }
+    let document = match parseJson(event.data) {
+        Ok(value) -> value
+        Error(problem) -> return .Error(
+            .Malformed("event \(event.name) is not JSON: \(traceText(problem))")
+        )
+    }
+    let key = match jsonNumber(document, "index") {
+        Some(index) -> String(index)
+        None -> ""
+    }
+    match event.name {
+        "message_start" -> {
+            let message = jsonAt(document, "message")
+            assembly.servedModel = jsonOptionalText(message, "model")
+            assembly.report(anthropicUsage(jsonAt(message, "usage")))
+        }
+        "content_block_start" -> {
+            let block = jsonAt(document, "content_block")
+            match jsonText(block, "type") {
+                "tool_use" -> return .Ok(
+                    assembly.toolStart(key, jsonText(block, "id"), jsonText(block, "name"))
+                )
+                "text" -> return .Ok(assembly.text(key, jsonText(block, "text")))
+                "thinking" -> return .Ok(assembly.reasoning(key, jsonText(block, "thinking")))
+                else -> {}
+            }
+        }
+        "content_block_delta" -> {
+            let delta = jsonAt(document, "delta")
+            match jsonText(delta, "type") {
+                "text_delta" -> return .Ok(assembly.text(key, jsonText(delta, "text")))
+                "thinking_delta" -> return .Ok(assembly.reasoning(key, jsonText(delta, "thinking")))
+                "signature_delta" -> assembly.sign(key, jsonText(delta, "signature"))
+                "input_json_delta" -> return assembly.toolInput(
+                    key,
+                    jsonText(delta, "partial_json")
+                )
+                else -> {}
+            }
+        }
+        "content_block_stop" -> return assembly.close(key)
+        "message_delta" -> {
+            let delta = jsonAt(document, "delta")
+            match jsonOptionalText(delta, "stop_reason") {
+                Some(reason) -> assembly.finish = .Some(anthropicFinish(reason))
+                None -> {}
+            }
+            assembly.report(anthropicUsage(jsonAt(document, "usage")))
+        }
+        "message_stop" -> assembly.ended = true
+        // An error after the stream began: the status was a success, so
+        // the failure is the document's.
+        "error" -> return .Error(anthropicFailure(200, document))
+        else -> {}
+    }
+    return .Ok([])
+}
+
+// The usage block. Each number is absent when the block does not carry it.
+function anthropicUsage(usage: borrow JsonValue) -> Usage {
+    return Usage {
+        inputTokens: jsonNumber(usage, "input_tokens"),
+        outputTokens: jsonNumber(usage, "output_tokens"),
+        cacheReadTokens: jsonNumber(usage, "cache_read_input_tokens"),
+        cacheWriteTokens: jsonNumber(usage, "cache_creation_input_tokens")
+    }
+}
+
+// The canonical finish reason a `stop_reason` names.
+function anthropicFinish(stop: borrow String) -> FinishReason {
+    return match stop {
+        "max_tokens" -> .Length
+        "tool_use" -> .ToolCall
+        "refusal" -> .Refusal
+        else -> .Completed
+    }
+}

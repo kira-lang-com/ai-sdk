@@ -44,8 +44,14 @@ struct FilePart {
 // The model's own reasoning, when it exposes it as content distinct from the
 // answer. Kept as its own part so a caller can show it, log it, or drop it
 // without parsing the answer to find where thinking ended.
+//
+// `signature` is the service's seal over the reasoning. Anthropic refuses a
+// tool-use turn whose replayed thinking lost it, and other services that
+// return reasoning (Kimi, DeepSeek) expect it back on the next turn, so it is
+// carried rather than dropped.
 struct Reasoning {
     let text: String
+    let signature: String? = .None
 }
 
 // A JSON Schema, as the document a tool or a structured-output request is shaped
@@ -63,8 +69,9 @@ struct Tool {
     let inputSchema: Schema
 }
 
-// A model's request to call a tool. `input` is the arguments it chose, still as
-// JSON because they are the tool's shape, not this SDK's.
+// A model's request to call a tool. `input` is the arguments it chose, parsed,
+// as JSON because they are the tool's shape, not this SDK's. A protocol that
+// carries them as text (OpenAI's `arguments`) writes them back as text.
 struct ToolCall {
     let id: String
     let name: String
@@ -115,9 +122,7 @@ enum Message {
 // these parts. The common request has no history, and this is how it says so
 // without spelling the enum at every call site.
 function userTurn(input: [Input]) -> [Message] {
-    var messages: [Message] = []
-    messages.append(.User(move input))
-    return messages
+    return [.User(move input)]
 }
 
 // One piece of what a model returns.
@@ -149,15 +154,27 @@ enum FinishReason {
     Cancelled
 }
 
+// A tool call as it begins: what the model is calling, before its arguments.
+struct ToolCallOpened {
+    let id: String
+    let name: String
+}
+
+// A piece of a tool call's arguments as the model writes them. `json` is a
+// fragment of JSON text, not a value: it parses only once the call ends.
+struct ToolInputDelta {
+    let id: String
+    let json: String
+}
+
 // One event in a stream.
 //
-// A stream is not a stream of text — it is a stream of typed events, so a
+// A stream is not a stream of text: it is a stream of typed events, so a
 // consumer switches on what arrived rather than parsing a text channel for
 // structure that was thrown away. Text arrives as a `Start`/`Delta`/`End`
-// bracket so a consumer knows a run began and ended; the same shape carries
-// reasoning and audio. `Completed` closes the stream with the assembled
-// `Response`, so a consumer that only wants the whole answer waits for one
-// event.
+// bracket so a consumer knows a run began and ended; reasoning and tool calls
+// have the same shape. A stream ends with exactly one of `Completed`, which
+// carries the assembled `Response`, or `Failed`.
 enum StreamEvent {
     TextStart
     TextDelta(TextPart)
@@ -167,17 +184,35 @@ enum StreamEvent {
     ReasoningDelta(Reasoning)
     ReasoningEnd
 
-    AudioStart
-    AudioDelta(AudioPart)
-    AudioEnd
-
-    ImageEvent(ImagePart)
-    VideoEvent(VideoPart)
-
-    ToolCallStart(String)
-    ToolCallDelta(JsonValue)
+    ToolCallStart(ToolCallOpened)
+    ToolCallDelta(ToolInputDelta)
     ToolCallEnd(ToolCall)
 
     UsageEvent(Usage)
     Completed(Response)
+    Failed(AIError)
+}
+
+// A finished response as the events that would have produced it, for a
+// service that answered a streaming request with one whole document.
+function eventsOf(response: Response) -> [StreamEvent] {
+    var events: [StreamEvent] = []
+    for output in response.output {
+        match output {
+            Text(body) -> events.appendAll([.TextStart, .TextDelta(copy body), .TextEnd])
+            Reason(reasoning) -> events.appendAll(
+                [.ReasoningStart, .ReasoningDelta(copy reasoning), .ReasoningEnd]
+            )
+            Call(call) -> {
+                events.append(.ToolCallStart(ToolCallOpened { id: call.id, name: call.name }))
+                events.append(.ToolCallEnd(copy call))
+            }
+            Image(_) -> {}
+            Audio(_) -> {}
+            Object(_) -> {}
+        }
+    }
+    events.append(.UsageEvent(copy response.usage))
+    events.append(.Completed(move response))
+    return events
 }

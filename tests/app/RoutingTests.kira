@@ -1,0 +1,81 @@
+import Foundation
+import AI
+import AIAnthropic
+import AIOpenAI
+import AIOpenRouter
+
+// Region narrowing, route selection and local validation: all decided before
+// a byte is sent.
+
+construct RegionsNarrow() extends Test {
+    test {
+        let checks = [
+            regionNarrows(.USWest1, .US),
+            !regionNarrows(.EUWest1, .US),
+            !regionNarrows(.US, .USWest1),
+            regionCompatible(.Some(.EUWest1), .None),
+            !regionCompatible(.None, .Some(.EU))
+        ]
+        var parts: [String] = []
+        for check in checks { parts.append(String(check)) }
+        return joined(parts, " ")
+    }
+    expect {
+        let e: Result<Any, TestFailure> = .Ok("true true true true true")
+        return e
+    }
+}
+
+// Backends are tried in the order given, so order is the preference.
+construct RoutesFollowBackendOrder() extends Test {
+    test {
+        let model = AI.Providers.OpenAI.GPT.5.6.Sol
+        let direct = Router {
+            backends: [OpenAIBackend(apiKey: "a"), OpenRouterBackend(apiKey: "b")]
+        }
+        let routed = Router {
+            backends: [OpenRouterBackend(apiKey: "b"), OpenAIBackend(apiKey: "a")]
+        }
+        let none = Router { backends: [AnthropicBackend(apiKey: "c")] }
+        var parts: [String] = []
+        for router in [direct, routed, none] {
+            parts.append(
+                match router.resolve(model) {
+                    Ok(route) -> "\(traceText(route.remoteID.service)) \(route.remoteID.id)"
+                    Error(problem) -> traceText(problem)
+                }
+            )
+        }
+        return joined(parts, " ; ")
+    }
+    expect {
+        let e: Result<Any, TestFailure> = .Ok(
+            "Service.OpenAI gpt-5.6-sol ; Service.OpenRouter openai/gpt-5.6-sol ; Service.Anthropic proxy.openai.gpt-5.6-sol"
+        )
+        return e
+    }
+}
+
+// A model that does not read video refuses it locally, and a backend that
+// cannot carry structured output says so instead of answering free text.
+construct RequestsAreCheckedLocally() extends Test {
+    test {
+        let video = Request {
+            model: AI.Providers.Anthropic.Claude.4.6.Opus,
+            messages: userTurn([.Video(VideoPart { mediaType: "video/mp4", base64: "AAAA" })])
+        }
+        let shaped = Request {
+            model: testModel(),
+            messages: userTurn([.Text(TextPart { text: "List three." })]),
+            outputSchema: .Some(Schema { json: .Object([]) })
+        }
+        let backend = AnthropicBackend(apiKey: "k")
+        return "\(traceText(validateRequest(video))) ; \(traceText(validateRequest(shaped))) ; \(outcome(backend.encode("m", shaped, false)))"
+    }
+    expect {
+        let e: Result<Any, TestFailure> = .Ok(
+            "Some(AIError.UnsupportedInputModality(Modality.Video)) ; None ; AIError.UnsupportedCapability(\"structured-output\")"
+        )
+        return e
+    }
+}

@@ -1,446 +1,281 @@
-// The OpenAI-compatible implementation, written once as free functions so every
-// service that speaks this protocol shares it.
+// The chat-completions protocol, written once as free functions so every
+// service that speaks it shares it.
 //
-// `OpenAIBackend` calls straight into `openaiGenerate`; `OpenRouterBackend`
-// calls the same function and adds its own headers and options on top. That is
-// the whole reason this is functions and not one backend's private methods —
-// "OpenRouter is OpenAI-compatible with more" is expressed by reuse, not by a
-// second copy of the encoder that drifts from the first.
-//
-// Everything above the wire works in canonical `Request` and `Response`. This
-// file is the only place that knows the chat-completions document shape, the
-// `image_url` data-URL convention, or which `finish_reason` string means what.
+// `OpenAIBackend` and `OpenAICompatibleBackend` call these directly;
+// `OpenRouterBackend` calls the same functions and adds its own members. So
+// "OpenRouter is OpenAI-compatible with more" is reuse, not a second encoder
+// that drifts from the first. This file and `OpenAIDecode.kira` are the only
+// places that know the chat-completions document shape.
 
 import Foundation
 import AI
+import Network as Net
 
-// One content part, as a chat-completions content object.
-//
-// The match is exhaustive over `Input`, so a new input modality is a compile
-// error here until it is given a wire shape — which is the right place to be
-// forced to decide, rather than discovering at run time that a part was dropped.
-function openaiContentPart(part: borrow Input) -> JsonValue {
-    match part {
-        Text(body) -> {
-            var members: [JsonMember] = []
-            members.append(JsonMember { name: "type", value: .Text("text") })
-            members.append(JsonMember { name: "text", value: .Text(body.text) })
-            return .Object(move members)
-        }
-        Image(image) -> {
-            var url: [JsonMember] = []
-            url.append(JsonMember {
-                name: "url",
-                value: .Text(openaiDataUrl(image.mediaType, image.base64))
-            })
-            var members: [JsonMember] = []
-            members.append(JsonMember { name: "type", value: .Text("image_url") })
-            members.append(JsonMember { name: "image_url", value: .Object(move url) })
-            return .Object(move members)
-        }
-        Audio(audio) -> {
-            var inner: [JsonMember] = []
-            inner.append(JsonMember { name: "data", value: .Text(audio.base64) })
-            inner.append(JsonMember {
-                name: "format",
-                value: .Text(openaiAudioFormat(audio.mediaType))
-            })
-            var members: [JsonMember] = []
-            members.append(JsonMember { name: "type", value: .Text("input_audio") })
-            members.append(JsonMember { name: "input_audio", value: .Object(move inner) })
-            return .Object(move members)
-        }
-        Video(video) -> {
-            // No standard chat-completions video part; the file part is the
-            // closest honest carriage — bytes and a media type, named as such.
-            return openaiFilePart("video", video.mediaType, video.base64)
-        }
-        File(file) -> {
-            return openaiFilePart(file.name, file.mediaType, file.base64)
-        }
-    }
+namespace OpenAI {
+    let completionsPath: String = "/chat/completions"
+    let defaultMaxTokens: Number = 4096
 }
 
-// A file content object, carrying bytes as a data URL under their given name.
-function openaiFilePart(name: borrow String, mediaType: borrow String, base64: borrow String) -> JsonValue {
-    var inner: [JsonMember] = []
-    inner.append(JsonMember { name: "filename", value: .Text(name) })
-    inner.append(JsonMember {
-        name: "file_data",
-        value: .Text(openaiDataUrl(mediaType, base64))
-    })
-    var members: [JsonMember] = []
-    members.append(JsonMember { name: "type", value: .Text("file") })
-    members.append(JsonMember { name: "file", value: .Object(move inner) })
-    return .Object(move members)
+// How one service differs inside the protocol.
+struct Dialect {
+    // The name of the answer's ceiling: OpenAI's own reasoning models refuse
+    // `max_tokens` and want `max_completion_tokens`; most compatible servers
+    // know only `max_tokens`.
+    let maxTokensField: String = "max_tokens"
+    // The assistant-message member replayed reasoning goes back in, for the
+    // services that want it back (Kimi and DeepSeek: `reasoning_content`;
+    // OpenRouter: `reasoning`). None drops it, which OpenAI itself expects.
+    let reasoningField: String? = .None
+    let fallbackMaxTokens: Number = OpenAI.defaultMaxTokens
 }
 
-// A `data:` URL, the shape chat-completions carries inline media in.
-function openaiDataUrl(mediaType: borrow String, base64: borrow String) -> String {
-    return "data:" + mediaType + ";base64," + base64
-}
-
-// The `format` a chat-completions audio part names, from a media type. The API
-// wants the codec word, not the MIME type, so `audio/mp3` becomes `mp3`.
-function openaiAudioFormat(mediaType: borrow String) -> String {
-    if mediaType.contains("wav") {
-        return "wav"
-    }
-    return "mp3"
-}
-
-// The request document's members, before serialization.
-//
-// The canonical input becomes one user message whose content is the parts in
-// order: a request has no roles of its own — it is what the caller is saying now
-// — so it is said as the user. Tools and a structured-output schema are added
-// only when present, because an empty `tools` array and a null `response_format`
-// are documents the service reads differently from their absence.
-//
-// This returns the member list rather than the finished text so a service built
-// on this protocol can add its own fields before it is written — which is how
-// `OpenRouterBackend` adds its `provider` block without a second encoder.
-function openaiRequestMembers(maxTokens: Int, modelID: borrow String, request: borrow Request) -> [JsonMember] {
+// The request document's members, before they are written, so a service on
+// this protocol can add its own (OpenRouter's `provider` block) first.
+function openaiMembers(
+    modelID: borrow String,
+    request: borrow Request,
+    dialect: borrow Dialect,
+    stream: Bool
+) -> Result<[JsonMember], AIError> {
     var messages: [JsonValue] = []
-    var index = 0
-    while index < request.messages.count {
-        let objects = openaiMessageObjects(request.messages[index])
-        var objectIndex = 0
-        while objectIndex < objects.count {
-            messages.append(objects[objectIndex])
-            objectIndex = objectIndex + 1
-        }
-        index = index + 1
-    }
-
-    var body: [JsonMember] = []
-    body.append(JsonMember { name: "model", value: .Text(modelID) })
-    body.append(JsonMember { name: "messages", value: .Array(move messages) })
-    // The ceiling on the answer. Sent always: a service that defaults an absent
-    // `max_tokens` to the model's maximum bills — or refuses — against a budget
-    // the caller never asked for, which is what a free-tier key meets first.
-    body.append(JsonMember { name: "max_tokens", value: .Integer(maxTokens) })
-
-    if request.tools.count > 0 {
-        body.append(JsonMember {
-            name: "tools",
-            value: openaiToolsArray(request.tools)
-        })
-    }
-
-    match request.outputSchema {
-        Some(schema) -> {
-            body.append(JsonMember {
-                name: "response_format",
-                value: openaiResponseFormat(schema)
-            })
-        }
+    match request.instructions {
+        Some(text) -> messages.append(
+            .Object([member("role", .Text("system")), member("content", .Text(copy text))])
+        )
         None -> {}
     }
-
-    return body
+    for message in request.messages {
+        messages.appendAll(try openaiMessages(message, dialect))
+    }
+    let ceiling = match request.maxTokens {
+        Some(value) -> value
+        None -> dialect.fallbackMaxTokens
+    }
+    var body = [
+        member("model", .Text(copy modelID)),
+        member("messages", .Array(messages)),
+        member(dialect.maxTokensField, .Number(ceiling))
+    ]
+    if request.tools.count > 0 { body.append(member("tools", openaiTools(request.tools))) }
+    match request.outputSchema {
+        Some(schema) -> body.append(
+            member(
+                "response_format",
+                .Object(
+                    [
+                        member("type", .Text("json_schema")),
+                        member(
+                            "json_schema",
+                            .Object(
+                                [member("name", .Text("response")), member(
+                                    "schema",
+                                    copy schema.json
+                                )]
+                            )
+                        )
+                    ]
+                )
+            )
+        )
+        None -> {}
+    }
+    if stream {
+        body.append(member("stream", .Boolean(true)))
+        // Usage arrives only when asked for, in a last chunk with no choices.
+        body.append(member("stream_options", .Object([member("include_usage", .Boolean(true))])))
+    }
+    return .Ok(body)
 }
 
-// The finished request document.
-function openaiRequestBody(maxTokens: Int, modelID: borrow String, request: borrow Request) -> String {
-    return writeJson(.Object(openaiRequestMembers(maxTokens, modelID, request)))
+// The request for `members`, with the caller's provider options merged in last.
+function openaiRequest(
+    base: borrow String,
+    apiKey: borrow String,
+    fields: borrow [Net.Field],
+    members: [JsonMember],
+    request: borrow Request,
+    stream: Bool
+) -> Result<Net.Request, AIError> {
+    let credential: Net.Field? = apiKey.count == 0 ? .None : .Some(
+        Net.Field { name: "authorization", value: "Bearer \(apiKey)", sensitive: true }
+    )
+    let document = mergedObject(move members, request.providerOptions)
+    return postJson(base, OpenAI.completionsPath, credential, fields, document, stream)
 }
 
-// One conversation turn as chat-completions messages.
-//
-// A list rather than one object because a tool turn is not one message here: the
-// chat protocol carries each result as its own `tool` message keyed by the call
-// it answers, so `ToolResults` with three results is three messages. User and
-// assistant turns are one each.
-function openaiMessageObjects(message: borrow Message) -> [JsonValue] {
+// One conversation turn as chat-completions messages: a tool turn is one
+// `tool` message per result, keyed by the call it answers.
+function openaiMessages(
+    message: borrow Message,
+    dialect: borrow Dialect
+) -> Result<[JsonValue], AIError> {
     var objects: [JsonValue] = []
     match message {
         User(parts) -> {
             var content: [JsonValue] = []
-            var index = 0
-            while index < parts.count {
-                content.append(openaiContentPart(parts[index]))
-                index = index + 1
-            }
-            var members: [JsonMember] = []
-            members.append(JsonMember { name: "role", value: .Text("user") })
-            members.append(JsonMember { name: "content", value: .Array(move content) })
-            objects.append(.Object(move members))
+            for part in parts { content.append(openaiInput(part)) }
+            objects.append(
+                .Object([member("role", .Text("user")), member("content", .Array(content))])
+            )
         }
         Assistant(outputs) -> {
-            var text = ""
-            var toolCalls: [JsonValue] = []
-            var index = 0
-            while index < outputs.count {
-                match outputs[index] {
-                    Text(body) -> text = text + body.text
-                    Call(call) -> toolCalls.append(openaiToolCallObject(call))
-                    Reason(_) -> {}
+            var text: [String] = []
+            var thought: [String] = []
+            var calls: [JsonValue] = []
+            for output in outputs {
+                match output {
+                    Text(body) -> text.append(copy body.text)
+                    Reason(reasoning) -> thought.append(copy reasoning.text)
+                    Call(call) -> calls.append(openaiCall(call))
+                    Object(value) -> text.append(writeJson(value))
                     Image(_) -> {}
                     Audio(_) -> {}
-                    Object(_) -> {}
                 }
-                index = index + 1
             }
-            var members: [JsonMember] = []
-            members.append(JsonMember { name: "role", value: .Text("assistant") })
-            members.append(JsonMember { name: "content", value: .Text(text) })
-            if toolCalls.count > 0 {
-                members.append(JsonMember { name: "tool_calls", value: .Array(move toolCalls) })
+            // A turn that only called tools has null content, not "".
+            let content: JsonValue = text.count == 0 ? .Null : .Text(joined(text, ""))
+            var members = [member("role", .Text("assistant")), member("content", move content)]
+            match dialect.reasoningField {
+                Some(field) -> {
+                    if thought.count > 0 {
+                        members.append(member(field, .Text(joined(thought, ""))))
+                    }
+                }
+                None -> {}
             }
-            objects.append(.Object(move members))
+            if calls.count > 0 { members.append(member("tool_calls", .Array(calls))) }
+            objects.append(.Object(members))
         }
         ToolResults(results) -> {
-            var index = 0
-            while index < results.count {
-                var members: [JsonMember] = []
-                members.append(JsonMember { name: "role", value: .Text("tool") })
-                members.append(JsonMember {
-                    name: "tool_call_id",
-                    value: .Text(results[index].id)
-                })
-                members.append(JsonMember {
-                    name: "content",
-                    value: .Text(writeJson(results[index].output))
-                })
-                objects.append(.Object(move members))
-                index = index + 1
+            for result in results {
+                let content = match result.output.text() {
+                    Some(value) -> value
+                    None -> writeJson(result.output)
+                }
+                objects.append(
+                    .Object(
+                        [
+                            member("role", .Text("tool")),
+                            member("tool_call_id", .Text(copy result.id)),
+                            member("content", .Text(content))
+                        ]
+                    )
+                )
             }
         }
     }
-    return objects
+    return .Ok(objects)
 }
 
-// One `tool_calls` entry: a function call the assistant chose. `arguments` is
-// carried as-is, because a call decoded from this protocol already holds them as
-// the JSON string the API names them by.
-function openaiToolCallObject(call: borrow ToolCall) -> JsonValue {
-    var fn: [JsonMember] = []
-    fn.append(JsonMember { name: "name", value: .Text(call.name) })
-    fn.append(JsonMember { name: "arguments", value: call.input })
+// One input part as a content part. The match is exhaustive, so a new input
+// modality does not compile until it is given a wire shape.
+function openaiInput(part: borrow Input) -> JsonValue {
+    return match part {
+        Text(body) -> .Object(
+            [member("type", .Text("text")), member("text", .Text(copy body.text))]
+        )
+        Image(image) -> .Object(
+            [
+                member("type", .Text("image_url")),
+                member(
+                    "image_url",
+                    .Object([member("url", .Text(dataUrl(image.mediaType, image.base64)))])
+                )
+            ]
+        )
+        Audio(audio) -> .Object(
+            [
+                member("type", .Text("input_audio")),
+                member(
+                    "input_audio",
+                    .Object(
+                        [
+                            member("data", .Text(copy audio.base64)),
+                            member("format", .Text(audioFormat(audio.mediaType)))
+                        ]
+                    )
+                )
+            ]
+        )
+        // No chat-completions video part exists; the file part carries the
+        // bytes and says what they are.
+        Video(video) -> filePart("video", video.mediaType, video.base64)
+        File(file) -> filePart(file.name, file.mediaType, file.base64)
+    }
+}
 
-    var members: [JsonMember] = []
-    members.append(JsonMember { name: "id", value: .Text(call.id) })
-    members.append(JsonMember { name: "type", value: .Text("function") })
-    members.append(JsonMember { name: "function", value: .Object(move fn) })
-    return .Object(move members)
+function filePart(
+    name: borrow String,
+    mediaType: borrow String,
+    base64: borrow String
+) -> JsonValue {
+    return .Object(
+        [
+            member("type", .Text("file")),
+            member(
+                "file",
+                .Object(
+                    [
+                        member("filename", .Text(copy name)),
+                        member("file_data", .Text(dataUrl(mediaType, base64)))
+                    ]
+                )
+            )
+        ]
+    )
+}
+
+// A `data:` URL, the shape chat-completions carries inline media in.
+function dataUrl(mediaType: borrow String, base64: borrow String) -> String {
+    return "data:\(mediaType);base64,\(base64)"
+}
+
+// The codec word an audio part names: the API wants `wav` or `mp3`, not a
+// media type.
+function audioFormat(mediaType: borrow String) -> String {
+    return mediaType.contains("wav") ? "wav" : "mp3"
+}
+
+// One `tool_calls` entry. The protocol carries arguments as JSON text.
+function openaiCall(call: borrow ToolCall) -> JsonValue {
+    return .Object(
+        [
+            member("id", .Text(copy call.id)),
+            member("type", .Text("function")),
+            member(
+                "function",
+                .Object(
+                    [member("name", .Text(copy call.name)), member(
+                        "arguments",
+                        .Text(writeJson(call.input))
+                    )]
+                )
+            )
+        ]
+    )
 }
 
 // The `tools` array: one function tool per canonical `Tool`.
-function openaiToolsArray(tools: borrow [Tool]) -> JsonValue {
+function openaiTools(tools: borrow [Tool]) -> JsonValue {
     var items: [JsonValue] = []
-    var index = 0
-    while index < tools.count {
-        var fn: [JsonMember] = []
-        fn.append(JsonMember { name: "name", value: .Text(tools[index].name) })
-        fn.append(JsonMember { name: "description", value: .Text(tools[index].description) })
-        fn.append(JsonMember { name: "parameters", value: tools[index].inputSchema.json })
-
-        var tool: [JsonMember] = []
-        tool.append(JsonMember { name: "type", value: .Text("function") })
-        tool.append(JsonMember { name: "function", value: .Object(move fn) })
-        items.append(.Object(move tool))
-        index = index + 1
+    for tool in tools {
+        items.append(
+            .Object(
+                [
+                    member("type", .Text("function")),
+                    member(
+                        "function",
+                        .Object(
+                            [
+                                member("name", .Text(copy tool.name)),
+                                member("description", .Text(copy tool.description)),
+                                member("parameters", copy tool.inputSchema.json)
+                            ]
+                        )
+                    )
+                ]
+            )
+        )
     }
-    return .Array(move items)
-}
-
-// The `response_format` for a structured-output request.
-function openaiResponseFormat(schema: borrow Schema) -> JsonValue {
-    var inner: [JsonMember] = []
-    inner.append(JsonMember { name: "name", value: .Text("response") })
-    inner.append(JsonMember { name: "schema", value: schema.json })
-
-    var members: [JsonMember] = []
-    members.append(JsonMember { name: "type", value: .Text("json_schema") })
-    members.append(JsonMember { name: "json_schema", value: .Object(move inner) })
-    return .Object(move members)
-}
-
-// Send one request over the OpenAI protocol and read the answer.
-//
-// `extraHeaders` is how a service on this protocol adds what it needs without a
-// second encoder: OpenRouter passes its attribution headers here. A key crosses
-// TLS or it does not cross — an `http://` base with a key set is refused before
-// the send, because a bearer token in cleartext is a leaked token.
-function openaiGenerate(
-    baseURL: borrow String,
-    apiKey: borrow String,
-    extraHeaders: borrow [HttpHeader],
-    trustPort: Int,
-    maxTokens: Int,
-    modelID: borrow String,
-    request: borrow Request
-) -> Result<Response, AIError> {
-    let body = openaiRequestBody(maxTokens, modelID, request)
-    return openaiSend(baseURL, apiKey, extraHeaders, trustPort, body, request)
-}
-
-// Send a pre-built request body over the OpenAI protocol and read the answer.
-//
-// Split from `openaiGenerate` so a service can encode its own body — adding the
-// fields this protocol does not name — and still share every step that follows:
-// the cleartext-key refusal, the headers, the send, and the decode.
-function openaiSend(
-    baseURL: borrow String,
-    apiKey: borrow String,
-    extraHeaders: borrow [HttpHeader],
-    trustPort: Int,
-    body: borrow String,
-    request: borrow Request
-) -> Result<Response, AIError> {
-    if apiKey != "" && !openaiIsSecureUrl(baseURL) {
-        return .Error(.Malformed(
-            "the base URL is not https, and an API key must not be sent in cleartext"
-        ))
-    }
-    let url = baseURL + "/chat/completions"
-
-    var headers: [HttpHeader] = []
-    headers.append(HttpHeader { name: "content-type", value: "application/json" })
-    if apiKey != "" {
-        headers.append(HttpHeader { name: "authorization", value: "Bearer " + apiKey })
-    }
-    var index = 0
-    while index < extraHeaders.count {
-        headers.append(extraHeaders[index])
-        index = index + 1
-    }
-
-    let answer = httpSend("POST", url, headers, body, 60000, trustPort)
-    return openaiDecodeAnswer(answer, request)
-}
-
-// Whether a base URL will carry a credential safely: `https` and nothing else,
-// case-insensitively, because a scheme is.
-function openaiIsSecureUrl(url: borrow String) -> Bool {
-    return url.lowercase().startsWith("https://")
-}
-
-// Read one HTTP answer as a canonical response.
-function openaiDecodeAnswer(answer: borrow HttpAnswer, request: borrow Request) -> Result<Response, AIError> {
-    if answer.code < 0 {
-        return .Error(.Transport(answer.code))
-    }
-    if answer.body == "" {
-        return .Error(.Status(answer.status))
-    }
-    match parseJson(answer.body) {
-        Error(problem) -> {
-            return .Error(.Malformed(
-                "the body is not JSON (byte " + String(problem.at)
-                    + ", status " + String(answer.status) + ")"
-            ))
-        }
-        Ok(document) -> {
-            let error = jsonField(document, "error")
-            if !jsonIsNull(error) {
-                let message = jsonText(jsonField(error, "message"), "")
-                if message != "" {
-                    return .Error(.ServiceError(message))
-                }
-                return .Error(.Status(answer.status))
-            }
-            if answer.status != 200 {
-                return .Error(.Status(answer.status))
-            }
-            return openaiReadCompletion(document, request)
-        }
-    }
-}
-
-// Turn a completion document into a canonical `Response`.
-function openaiReadCompletion(document: borrow JsonValue, request: borrow Request) -> Result<Response, AIError> {
-    let choices = jsonField(document, "choices")
-    if jsonCount(choices) == 0 {
-        return .Error(.Malformed("the answer carries no choices"))
-    }
-    let first = jsonAt(choices, 0)
-    let message = jsonField(first, "message")
-    let finishText = jsonText(jsonField(first, "finish_reason"), "")
-    let content = jsonText(jsonField(message, "content"), "")
-
-    var outputs: [Output] = []
-    let toolCalls = jsonField(message, "tool_calls")
-    var callIndex = 0
-    while callIndex < jsonCount(toolCalls) {
-        let call = jsonAt(toolCalls, callIndex)
-        let fn = jsonField(call, "function")
-        outputs.append(.Call(ToolCall {
-            id: jsonText(jsonField(call, "id"), ""),
-            name: jsonText(jsonField(fn, "name"), ""),
-            input: jsonField(fn, "arguments")
-        }))
-        callIndex = callIndex + 1
-    }
-    if content != "" {
-        outputs.append(.Text(TextPart { text: content }))
-    }
-
-    let producedCount = outputs.count
-    if producedCount == 0 && finishText == "length" {
-        let usage = jsonField(document, "usage")
-        return .Error(.Truncated(jsonInt(jsonField(usage, "completion_tokens"), 0)))
-    }
-
-    return .Ok(Response {
-        model: request.model,
-        output: move outputs,
-        usage: openaiReadUsage(jsonField(document, "usage")),
-        finishReason: openaiFinishReason(finishText, producedCount),
-        providerMetadata: .None
-    })
-}
-
-// The usage block, each field optional so "not reported" stays distinct from 0.
-function openaiReadUsage(usage: borrow JsonValue) -> Usage {
-    return Usage {
-        inputTokens: openaiOptionalInt(usage, "prompt_tokens"),
-        outputTokens: openaiOptionalInt(usage, "completion_tokens"),
-        cachedTokens: .None,
-        reasoningTokens: .None,
-        cost: .None
-    }
-}
-
-// An integer field that is `.None` when the document does not carry it.
-function openaiOptionalInt(object: borrow JsonValue, name: borrow String) -> Option<Int> {
-    if jsonHas(object, name) {
-        return .Some(jsonInt(jsonField(object, name), 0))
-    }
-    return .None
-}
-
-// The canonical finish reason a `finish_reason` string names.
-function openaiFinishReason(text: borrow String, outputCount: Int) -> FinishReason {
-    if text == "length" {
-        return .Length
-    }
-    if text == "tool_calls" {
-        return .ToolCall
-    }
-    if text == "content_filter" {
-        return .Refusal
-    }
-    return .Completed
-}
-
-// A completion as a materialized stream: the real events of the real answer,
-// delivered at once. Text arrives inside a `Start`/`End` bracket, tool calls as
-// a resolved `ToolCallEnd`, and the whole `Response` closes the stream — so a
-// consumer written against the event surface is correct now and stays correct
-// when incremental transport lands beneath it.
-function openaiStream(
-    baseURL: borrow String,
-    apiKey: borrow String,
-    extraHeaders: borrow [HttpHeader],
-    trustPort: Int,
-    maxTokens: Int,
-    modelID: borrow String,
-    request: borrow Request
-) -> Result<[StreamEvent], AIError> {
-    match openaiGenerate(baseURL, apiKey, extraHeaders, trustPort, maxTokens, modelID, request) {
-        Error(problem) -> return .Error(problem)
-        Ok(response) -> return .Ok(streamEventsFor(move response))
-    }
+    return .Array(items)
 }

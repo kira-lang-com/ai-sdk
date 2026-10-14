@@ -7,93 +7,117 @@ do, and routing decides — later, elsewhere — which backend answers.
 
 ```
 ai-sdk/
-  core/        the canonical layer — no wire format, no socket lives here
-  openai/      the OpenAI protocol, written once as reusable functions
+  core/        the canonical layer and the gateway; no wire format lives here
+  openai/      the chat-completions protocol, written once as reusable functions
   openrouter/  the OpenAI protocol plus provider routing, built on openai/
-  anthropic/   the Messages protocol — a different wire, the same canonical types
-  examples/demo/   a runnable tour: routing, regions, validation, a real call
+  anthropic/   the Messages protocol: a different wire, the same canonical types
+  tests/       each codec against byte vectors, and generations over HTTP/3
+  examples/demo             one real streamed answer from whichever key is set
+  examples/openrouter-live  one real completion with a tool call
 ```
 
 ## Transport
 
-The SDK writes no FFI of its own. HTTP comes from Foundation — `httpSend`,
-`HttpHeader`, `HttpAnswer` — which every package already reaches through
-`import Foundation`. Foundation owns the `kira_network` binding (autobound from
-its header, not hand-written) and ships the archive with the toolchain, so there
-is nothing for the SDK to declare and no `NativeLibs` to carry. A backend calls
-`httpSend`; nothing above it, and nothing in this repo, knows a socket.
+HTTP comes from Kira's `Network` library
+(`klf-kira/languages/kira/libraries/Network`, a path dependency on the sibling
+checkout): HTTP/3 over QUIC or HTTP/1.1 over TLS 1.3, `text/event-stream`
+decoding, and one value the program owns and moves with `wait` or `poll`.
+
+A backend never touches a socket. It is a codec: it encodes a canonical
+request into an HTTP request, and decodes a whole body or one server-sent event
+back into canonical values. The `Gateway` sends what a backend encodes through
+the program's `Network`. So every backend streams, multiplexes and speaks
+HTTP/3 the same way, and each is tested with byte vectors alone.
 
 ## The shape
-
-Everything conforms to one construct family:
 
 ```kira
 construct Backend {
     @Required let service: Service
     @Required let protocol: Protocol
-    let region: Option<Region> = .None
+    let region: Region? = .None
 
-    @Required function generate(modelID: borrow String, request: borrow Request)
+    @Required function encode(modelID: borrow String, request: borrow Request, stream: Bool)
+        -> Result<Net.Request, AIError>
+    @Required function decode(status: Number, body: borrow [UN8], model: borrow Model)
         -> Result<Response, AIError>
-    @Required function streamEvents(modelID: borrow String, request: borrow Request)
+    @Required function decodeEvent(event: borrow Net.ServerEvent, assembly: borrow mut StreamAssembly)
         -> Result<[StreamEvent], AIError>
 }
 ```
 
-`OpenAIBackend`, `AnthropicBackend`, and `OpenRouterBackend` each `extends
-Backend`. A `Router` holds them as `Any Backend`, and resolves a model to the
-first backend that agrees on service, protocol, and region. A `Gateway`
-validates a request against its model — locally, before any network I/O — then
-routes and dispatches it.
+`OpenAIBackend`, `OpenAICompatibleBackend`, `AnthropicBackend` and
+`OpenRouterBackend` each extend `Backend`. A `Router` holds them as
+`Any Backend` and resolves a model to the first backend that agrees on
+service, protocol and region. A `Gateway` validates a request against its
+model locally, before any network I/O, then routes, encodes and sends it.
+
+## Streaming
+
+```kira
+var network = try Net.openNetwork(Net.NetworkOptions {}) otherwise return
+let flow = gateway([AnthropicBackend(apiKey: key)])
+var generation = try flow.start(network, request) otherwise return
+while !generation.finished {
+    for event in network.wait(.None) {
+        for produced in generation.take(event) {
+            match produced {
+                TextDelta(part) -> show(part.text)
+                Completed(response) -> finish(response)
+                Failed(problem) -> report(problem)
+                else -> {}
+            }
+        }
+    }
+}
+```
+
+`take` ignores events for other requests, so any number of generations and any
+other traffic share one `Network`. Text, reasoning and tool calls arrive as
+`Start`/`Delta`/`End` brackets, and the stream ends with exactly one
+`Completed(Response)` or `Failed(AIError)`. A service that answers a
+streaming request with one whole document still produces the same events.
+`flow.generate(network, request, until)` waits for a whole answer instead.
+
+`generation.exchange` keeps the wire record of the call before any decoding
+(URL, model id, request fields with the key shown by name only, request body,
+status, response fields, raw body), for diagnosing a failed or empty turn.
+
+`Response.servedModel` is the model the service says answered, which differs
+from `Response.model` when a provider falls back. Reasoning keeps its
+signature, so a tool-use turn replays to Anthropic intact.
 
 ## Same model, different routes
 
-`gpt56Sol()` is an OpenAI model. One of its endpoints is an Anthropic-shaped
-proxy; another is a Bedrock region. The model's provider and the service it is
-served through are different facts, and the second never edits the first. Point
-the same model at a different backend and it goes a different way, unchanged:
+`AI.Providers.OpenAI.GPT.5.6.Sol` is an OpenAI model. One of its endpoints is
+an Anthropic-shaped proxy; another is a Bedrock region. The model's provider
+and the service it is served through are different facts. Point the same model
+at a different backend and it goes a different way, unchanged:
 
 ```kira
-let flow = gateway([OpenAIBackend(apiKey: key)])        // OpenAI direct
-let flow = gateway([openRouter(key)])                   // OpenRouter, OpenAI protocol
-let flow = gateway([OpenAICompatibleBackend(baseURL: url)])  // any compatible endpoint
+let flow = gateway([OpenAIBackend(apiKey: key)])                       // OpenAI direct
+let flow = gateway([OpenRouterBackend(apiKey: key)])                   // OpenRouter
+let flow = gateway([OpenAICompatibleBackend(baseURL: url)])            // any compatible server
 ```
 
-## OpenRouter is OpenAI, plus
-
-`openrouter/` imports `openai/`'s encoder, send, and decoder — it does not copy
-them. All it adds is a `provider` block on the request body and a title header.
-When the OpenAI encoder gains a field, OpenRouter gets it for free, because there
-is only one encoder.
-
-## Run the tour
+## Run it
 
 ```
-
-These commands want **`kk`**, the native frontend of the
-[Kira Language Framework](https://github.com/kira-lang-com/klf-kira), which
-`klf build .` produces in that repository. `kk`'s binary is also called `kira`,
-so the two are told apart by which one is on your `PATH`, not by the name you
-type. The oracle compiler from
-[kira-lang-com/kira](https://github.com/kira-lang-com/kira) aborts partway
-through semantic analysis on this codebase.
-
-kira run examples/demo            # from the kira toolchain, against this repo
+kira test tests
+ANTHROPIC_API_KEY=... kira run examples/demo -- "Why is the sky blue?"
 ```
 
-It checks region narrowing, route selection, and request validation with no
-network, then sends one real completion over TLS to the loopback service the
-toolchain ships — so the encode/send/decode path runs for real with no key and
-no internet.
+`OPENROUTER_API_KEY` or `OPENAI_API_KEY` work in place of the Anthropic key.
 
 ## Not yet
 
-- **Region narrowing is a runtime check.** The design wants enum inheritance
-  (`enum AWSUSRegion extends Region.US`), which Kira does not have yet; until it
-  lands, `regionNarrows` does at run time what the subtype relation would do at
-  compile time. When it lands, `core/app/Region.kira` collapses into the enum
-  and nothing above it changes.
-- **Streaming is materialized.** `streamEvents` returns the real events of a real
-  completion, delivered at once — the shipped network FFI has no SSE primitive
-  yet. A consumer written against `StreamEvent` stays correct when incremental
-  transport lands beneath it.
+- **Region narrowing is a runtime check.** Kira has no enum inheritance, so
+  `regionBroad` names each zone's bucket and routing checks the relation when
+  it resolves.
+- **Structured output on Anthropic.** The Messages encoder refuses a request
+  with an `outputSchema` rather than answering free text.
+- **Redacted thinking** blocks from Anthropic are dropped, so a turn that had
+  one cannot be replayed exactly.
+- **TLS 1.2-only servers** cannot be reached: `Network` speaks TLS 1.3 only.
+- **`core/models/`** holds generated model tables in an older dialect. They are
+  not part of any package until they are brought up to date.

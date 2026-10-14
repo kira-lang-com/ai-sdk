@@ -31,30 +31,42 @@ namespace AI.Providers.OpenAI.GPT.5.6 {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .OpenAI, protocol: .OpenAI,
-                region: .Some(.Global), id: "gpt-5.6-sol"
+                service: .OpenAI,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "gpt-5.6-sol"
             },
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "openai/gpt-5.6-sol"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "openai/gpt-5.6-sol"
             },
             RemoteModelID {
-                service: .AmazonBedrock, protocol: .Bedrock,
-                region: .Some(.US), id: "openai.gpt-5.6-sol-v1:0"
+                service: .AmazonBedrock,
+                protocol: .Bedrock,
+                region: .Some(.US),
+                id: "openai.gpt-5.6-sol-v1:0"
             },
             RemoteModelID {
-                service: .AmazonBedrock, protocol: .Bedrock,
-                region: .Some(.USWest1), id: "us-west-1.openai.gpt-5.6-sol-v1:0"
+                service: .AmazonBedrock,
+                protocol: .Bedrock,
+                region: .Some(.USWest1),
+                id: "us-west-1.openai.gpt-5.6-sol-v1:0"
             },
             RemoteModelID {
-                service: .Azure, protocol: .AzureOpenAI,
-                region: .Some(.US), id: "gpt-56-sol"
+                service: .Azure,
+                protocol: .AzureOpenAI,
+                region: .Some(.US),
+                id: "gpt-56-sol"
             },
             // Still an OpenAI model; it just happens to be served through an
             // Anthropic-style proxy.
             RemoteModelID {
-                service: .Anthropic, protocol: .Anthropic,
-                region: .Some(.Global), id: "proxy.openai.gpt-5.6-sol"
+                service: .Anthropic,
+                protocol: .Anthropic,
+                region: .Some(.Global),
+                id: "proxy.openai.gpt-5.6-sol"
             }
         ]
     }
@@ -78,12 +90,16 @@ namespace AI.Providers.OpenAI.GPT.5.6 {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .OpenAI, protocol: .OpenAI,
-                region: .Some(.Global), id: "gpt-5.6-luna"
+                service: .OpenAI,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "gpt-5.6-luna"
             },
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "openai/gpt-5.6-luna"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "openai/gpt-5.6-luna"
             }
         ]
     }
@@ -108,20 +124,64 @@ namespace AI.Providers.Anthropic.Claude.4.6 {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .Anthropic, protocol: .Anthropic,
-                region: .Some(.Global), id: "claude-opus-4-6"
+                service: .Anthropic,
+                protocol: .Anthropic,
+                region: .Some(.Global),
+                id: "claude-opus-4-6"
             },
             RemoteModelID {
-                service: .AmazonBedrock, protocol: .Bedrock,
-                region: .Some(.US), id: "anthropic.claude-opus-4-6-v1:0"
+                service: .AmazonBedrock,
+                protocol: .Bedrock,
+                region: .Some(.US),
+                id: "anthropic.claude-opus-4-6-v1:0"
             },
             RemoteModelID {
-                service: .AmazonBedrock, protocol: .Bedrock,
-                region: .Some(.EU), id: "eu.anthropic.claude-opus-4-6-v1:0"
+                service: .AmazonBedrock,
+                protocol: .Bedrock,
+                region: .Some(.EU),
+                id: "eu.anthropic.claude-opus-4-6-v1:0"
             },
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "anthropic/claude-opus-4.6"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "anthropic/claude-opus-4.6"
+            }
+        ]
+    }
+}
+
+// The Claude 5.5 line, served direct by Anthropic.
+namespace AI.Providers.Anthropic.Claude.5.5 {
+    let Opus = claudeDirect(.Opus, "5.5", "claude-opus-5-5")
+    let Sonnet = claudeDirect(.Sonnet, "5.5", "claude-sonnet-5-5")
+    let Haiku = claudeDirect(.Haiku, "5.5", "claude-haiku-5-5")
+}
+
+// A Claude model reached at Anthropic under `id`.
+function claudeDirect(variant: Variant, version: String, id: String) -> Model {
+    return Model {
+        identity: ModelIdentity {
+            provider: .Anthropic,
+            family: .Claude,
+            variant: .Some(variant),
+            version: version
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text, .Image, .File],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: false,
+            reasoning: true,
+            promptCaching: true
+        },
+        remoteIDs: [
+            RemoteModelID {
+                service: .Anthropic,
+                protocol: .Anthropic,
+                region: .Some(.Global),
+                id: id
             }
         ]
     }
@@ -146,12 +206,16 @@ namespace AI.Providers.Anthropic.Claude.5.6 {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .Anthropic, protocol: .Anthropic,
-                region: .Some(.Global), id: "claude-fable-5-6"
+                service: .Anthropic,
+                protocol: .Anthropic,
+                region: .Some(.Global),
+                id: "claude-fable-5-6"
             },
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "anthropic/claude-fable-5.6"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "anthropic/claude-fable-5.6"
             }
         ]
     }
@@ -160,12 +224,7 @@ namespace AI.Providers.Anthropic.Claude.5.6 {
 namespace AI.Providers.MiniMax {
     // MiniMax M-series, served through OpenRouter.
     let M1 = Model {
-        identity: ModelIdentity {
-            provider: .MiniMax,
-            family: .M,
-            variant: .None,
-            version: "m1"
-        },
+        identity: ModelIdentity { provider: .MiniMax, family: .M, variant: .None, version: "m1" },
         capabilities: ModelCapabilities {
             input: [.Text],
             output: [.Text],
@@ -177,19 +236,16 @@ namespace AI.Providers.MiniMax {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "minimax/minimax-m1"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "minimax/minimax-m1"
             }
         ]
     }
 
     let M2 = Model {
-        identity: ModelIdentity {
-            provider: .MiniMax,
-            family: .M,
-            variant: .None,
-            version: "m2"
-        },
+        identity: ModelIdentity { provider: .MiniMax, family: .M, variant: .None, version: "m2" },
         capabilities: ModelCapabilities {
             input: [.Text],
             output: [.Text],
@@ -201,19 +257,16 @@ namespace AI.Providers.MiniMax {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "minimax/minimax-m2"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "minimax/minimax-m2"
             }
         ]
     }
 
     let M3 = Model {
-        identity: ModelIdentity {
-            provider: .MiniMax,
-            family: .M,
-            variant: .None,
-            version: "m3"
-        },
+        identity: ModelIdentity { provider: .MiniMax, family: .M, variant: .None, version: "m3" },
         capabilities: ModelCapabilities {
             input: [.Text],
             output: [.Text],
@@ -225,8 +278,10 @@ namespace AI.Providers.MiniMax {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "minimax/minimax-m3"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "minimax/minimax-m3"
             }
         ]
     }
@@ -252,8 +307,10 @@ namespace AI.Providers.ThinkingMachines.Inkling {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "thinkingmachines/inkling-small:free"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "thinkingmachines/inkling-small:free"
             }
         ]
     }
@@ -280,8 +337,10 @@ namespace AI.Providers.Nvidia.Nemotron.3 {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "nvidia/nemotron-3-super-120b-a12b:free"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "nvidia/nemotron-3-super-120b-a12b:free"
             }
         ]
     }
@@ -305,8 +364,10 @@ namespace AI.Providers.Nvidia.Nemotron.3 {
         },
         remoteIDs: [
             RemoteModelID {
-                service: .OpenRouter, protocol: .OpenAI,
-                region: .Some(.Global), id: "nvidia/nemotron-3-ultra-550b-a55b:free"
+                service: .OpenRouter,
+                protocol: .OpenAI,
+                region: .Some(.Global),
+                id: "nvidia/nemotron-3-ultra-550b-a55b:free"
             }
         ]
     }

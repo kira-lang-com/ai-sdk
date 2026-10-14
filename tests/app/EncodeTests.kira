@@ -1,0 +1,162 @@
+import Foundation
+import AI
+import AIAnthropic
+import AIOpenAI
+import AIOpenRouter
+import Network as Net
+
+// What each backend puts on the wire for one conversation that has been
+// through a tool call, and how each reads a refusal.
+
+function weatherTool() -> Tool {
+    let schema = JsonValue.Object(
+        [
+            member("type", .Text("object")),
+            member(
+                "properties",
+                .Object([member("city", .Object([member("type", .Text("string"))]))])
+            ),
+            member("required", .Array([.Text("city")]))
+        ]
+    )
+    return Tool {
+        name: "weather",
+        description: "Weather for a city.",
+        inputSchema: Schema { json: schema }
+    }
+}
+
+// A user question, the assistant's reasoning and call, and the result.
+function toolConversation() -> Request {
+    let call = ToolCall {
+        id: "call_1",
+        name: "weather",
+        input: .Object([member("city", .Text("Paris"))])
+    }
+    return Request {
+        model: testModel(),
+        messages: [
+            .User([.Text(TextPart { text: "Weather in Paris?" })]),
+            .Assistant(
+                [
+                    .Reason(Reasoning { text: "Use the tool.", signature: .Some("c2ln") }),
+                    .Text(TextPart { text: "Checking." }),
+                    .Call(call)
+                ]
+            ),
+            .ToolResults([ToolResult { id: "call_1", output: .Text("18C, clear") }])
+        ],
+        instructions: .Some("Be brief."),
+        tools: [weatherTool()],
+        maxTokens: .Some(100)
+    }
+}
+
+// Whether an encode succeeded, or why not.
+function outcome(wire: borrow Result<Net.Request, AIError>) -> String {
+    return match wire {
+        Ok(_) -> "ok"
+        Error(problem) -> traceText(problem)
+    }
+}
+
+// The wire request as text: its URL, its fields and its body.
+function describeWire(wire: borrow Result<Net.Request, AIError>) -> String {
+    let request = match wire {
+        Ok(value) -> value
+        Error(problem) -> return traceText(problem)
+    }
+    let exchange = exchangeOf(request, "test-model")
+    let body = match textFromBytes(exchange.requestBody) {
+        Some(text) -> text
+        None -> "?"
+    }
+    return "\(exchange.url) {\(joined(exchange.requestFields, ", "))} \(body)"
+}
+
+construct AnthropicEncodesAToolConversation() extends Test {
+    test {
+        let backend = AnthropicBackend(apiKey: "sk-secret")
+        return describeWire(backend.encode("claude-x", toolConversation(), true))
+    }
+    expect {
+        let e: Result<Any, TestFailure> = .Ok(
+            "https://api.anthropic.com/v1/messages {content-type: application/json, accept: text/event-stream, x-api-key: (x-api-key), anthropic-version: 2023-06-01} {\"model\":\"claude-x\",\"max_tokens\":100,\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Weather in Paris?\"}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Use the tool.\",\"signature\":\"c2ln\"},{\"type\":\"text\",\"text\":\"Checking.\"},{\"type\":\"tool_use\",\"id\":\"call_1\",\"name\":\"weather\",\"input\":{\"city\":\"Paris\"}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"call_1\",\"content\":\"18C, clear\"}]}],\"system\":\"Be brief.\",\"tools\":[{\"name\":\"weather\",\"description\":\"Weather for a city.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}}],\"stream\":true}"
+        )
+        return e
+    }
+}
+
+construct OpenAIEncodesAToolConversation() extends Test {
+    test {
+        let backend = OpenAIBackend(apiKey: "sk-secret")
+        return describeWire(backend.encode("gpt-x", toolConversation(), false))
+    }
+    expect {
+        let e: Result<Any, TestFailure> = .Ok(
+            "https://api.openai.com/v1/chat/completions {content-type: application/json, accept: application/json, authorization: (authorization)} {\"model\":\"gpt-x\",\"messages\":[{\"role\":\"system\",\"content\":\"Be brief.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Weather in Paris?\"}]},{\"role\":\"assistant\",\"content\":\"Checking.\",\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"weather\",\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\"}}]},{\"role\":\"tool\",\"tool_call_id\":\"call_1\",\"content\":\"18C, clear\"}],\"max_completion_tokens\":100,\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"weather\",\"description\":\"Weather for a city.\",\"parameters\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}}}]}"
+        )
+        return e
+    }
+}
+
+// OpenRouter adds its provider block and title, and takes reasoning back.
+construct OpenRouterAddsItsRouting() extends Test {
+    test {
+        let backend = OpenRouterBackend(
+            apiKey: "or-secret",
+            options: OpenRouterOptions { order: .Some(["groq"]), allowFallbacks: .Some(false) }
+        )
+        return describeWire(backend.encode("vendor/model", toolConversation(), true))
+    }
+    expect {
+        let e: Result<Any, TestFailure> = .Ok(
+            "https://openrouter.ai/api/v1/chat/completions {content-type: application/json, accept: text/event-stream, authorization: (authorization), x-title: Kira AI SDK} {\"model\":\"vendor/model\",\"messages\":[{\"role\":\"system\",\"content\":\"Be brief.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Weather in Paris?\"}]},{\"role\":\"assistant\",\"content\":\"Checking.\",\"reasoning\":\"Use the tool.\",\"tool_calls\":[{\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"weather\",\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\"}}]},{\"role\":\"tool\",\"tool_call_id\":\"call_1\",\"content\":\"18C, clear\"}],\"max_tokens\":100,\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"weather\",\"description\":\"Weather for a city.\",\"parameters\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}}}],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"provider\":{\"order\":[\"groq\"],\"allow_fallbacks\":false}}"
+        )
+        return e
+    }
+}
+
+// A key never travels in cleartext, and a URL that is not one is refused.
+construct KeysStayOffCleartext() extends Test {
+    test {
+        let request = toolConversation()
+        let plain = OpenAICompatibleBackend(baseURL: "http://example.com/v1", apiKey: "sk")
+        let local = OpenAICompatibleBackend(baseURL: "http://127.0.0.1:8080/v1")
+        let broken = AnthropicBackend(apiKey: "sk", baseURL: "api.anthropic.com")
+        var parts: [String] = []
+        parts.append(outcome(plain.encode("m", request, false)))
+        parts.append(outcome(local.encode("m", request, false)))
+        parts.append(outcome(broken.encode("m", request, false)))
+        return joined(parts, " ")
+    }
+    expect {
+        let e: Result<Any, TestFailure> = .Ok(
+            "AIError.InvalidEndpoint(\"http://example.com/v1 is not https, and a key must not travel in cleartext\") ok AIError.InvalidEndpoint(\"api.anthropic.com\")"
+        )
+        return e
+    }
+}
+
+// Refusals: an error document, an error status with a proxy's page, and an
+// answer cut off before it said anything.
+construct ServicesRefuseInTheirOwnWords() extends Test {
+    test {
+        let model = testModel()
+        let overloaded = "{\"type\":\"error\",\"error\":{\"type\":\"overloaded_error\",\"message\":\"Overloaded\"}}"
+        let limited = "{\"error\":{\"message\":\"Rate limit reached\",\"type\":\"requests\",\"code\":\"rate_limit_exceeded\"}}"
+        let cut = "{\"model\":\"m\",\"choices\":[{\"message\":{\"content\":\"\"},\"finish_reason\":\"length\"}],\"usage\":{\"completion_tokens\":100}}"
+        var parts: [String] = []
+        parts.append(traceText(anthropicDecode(529, overloaded.utf8(), model)))
+        parts.append(traceText(openaiDecode(429, limited.utf8(), model)))
+        parts.append(traceText(openaiDecode(502, "<html>bad gateway</html>".utf8(), model)))
+        parts.append(traceText(openaiDecode(200, cut.utf8(), model)))
+        return joined(parts, " ; ")
+    }
+    expect {
+        let e: Result<Any, TestFailure> = .Ok(
+            "Error(AIError.Service(ServiceFailure { status: 529, kind: \"overloaded_error\", message: \"Overloaded\" })) ; Error(AIError.Service(ServiceFailure { status: 429, kind: \"requests\", message: \"Rate limit reached\" })) ; Error(AIError.Status(502)) ; Error(AIError.Truncated(Some(100)))"
+        )
+        return e
+    }
+}

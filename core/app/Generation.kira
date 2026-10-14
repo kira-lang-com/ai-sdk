@@ -1,0 +1,158 @@
+// One generation in flight on a `Network`.
+//
+// `Gateway.start` sends the request and answers a `Generation` at once; the
+// program keeps moving its `Network` and hands every event to `take`, which
+// ignores what belongs to other requests. So any number of generations, and
+// any other traffic, share one network and one connection per origin, and a
+// UI frame loop streams tokens with `poll` while a command-line tool blocks in
+// `wait`.
+
+import Foundation
+import Network as Net
+
+// The exchange as it crossed the wire, before any decoding: what to keep when
+// a call fails or comes back empty. A sensitive field (the key) is recorded by
+// its name only.
+struct Exchange {
+    let url: String
+    let modelID: String
+    let requestFields: [String]
+    let requestBody: [UN8]
+    var status: Number? = .None
+    var responseFields: Net.Fields = Net.Fields {}
+    var responseBody: [UN8] = []
+}
+
+function exchangeOf(request: borrow Net.Request, modelID: borrow String) -> Exchange {
+    var fields: [String] = []
+    for field in request.fields.entries {
+        fields.append(
+            field.sensitive ? "\(field.name): (\(field.name))" : "\(field.name): \(field.value)"
+        )
+    }
+    let body: [UN8] = match request.body {
+        Empty -> []
+        Bytes(bytes) -> copy bytes
+    }
+    return Exchange {
+        url: "\(request.target.scheme)://\(request.target.authority)\(request.target.path)",
+        modelID: copy modelID,
+        requestFields: fields,
+        requestBody: body
+    }
+}
+
+struct Generation {
+    let id: Net.RequestId
+    let backend: Any Backend
+    var assembly: StreamAssembly
+    var exchange: Exchange
+    var events: Net.EventStream = Net.EventStream {}
+    // The answer is a whole document rather than events: an error status, or
+    // a service that ignored the request to stream.
+    var whole: Bool = false
+    var finished: Bool = false
+
+    // What `event` means for this generation; nothing when it belongs to
+    // another request. The last event is `Completed` or `Failed`.
+    function take(borrow mut self, event: borrow Net.NetworkEvent) -> [StreamEvent] {
+        if finished { return [] }
+        return match event {
+            ResponseHead(head) -> head.request == id ? started(head) : []
+            ResponseBody(chunk) -> chunk.request == id ? received(chunk.bytes) : []
+            ResponseEnded(end) -> end.request == id ? ended(end) : []
+            Incoming(_) -> []
+            SessionOpened(_) -> []
+            StreamOpened(_) -> []
+            StreamData(_) -> []
+            StreamEnded(_) -> []
+            Datagram(_) -> []
+            SessionDraining(_) -> []
+            SessionClosed(_) -> []
+        }
+    }
+
+    // Abandons the generation; its stream is reset.
+    function cancel(borrow mut self, network: borrow mut Net.Network) {
+        finished = true
+        network.cancel(id)
+    }
+
+    function started(borrow mut self, head: borrow Net.ResponseHeadEvent) -> [StreamEvent] {
+        let status = code(head.status)
+        exchange.status = .Some(status)
+        exchange.responseFields = copy head.fields
+        let kind = match head.fields.first("content-type") {
+            Some(value) -> value.lowercased()
+            None -> ""
+        }
+        whole = !succeeded(status) || !kind.startsWith("text/event-stream")
+        return []
+    }
+
+    function received(borrow mut self, bytes: borrow [UN8]) -> [StreamEvent] {
+        exchange.responseBody.appendAll(bytes)
+        if whole { return [] }
+        if !events.feed(bytes) { return fail(.Malformed("an event line is longer than any event")) }
+        var out: [StreamEvent] = []
+        while !finished {
+            let event = match events.event() {
+                Some(value) -> value
+                None -> break
+            }
+            match backend.decodeEvent(event, assembly) {
+                Ok(produced) -> out.appendAll(produced)
+                Error(problem) -> return fail(move problem)
+            }
+            if assembly.ended { out.appendAll(complete()) }
+        }
+        return out
+    }
+
+    function ended(borrow mut self, end: borrow Net.RequestEnd) -> [StreamEvent] {
+        match end.failure {
+            Some(failure) -> return fail(.Transport(copy failure))
+            None -> {}
+        }
+        if whole {
+            let status = match exchange.status {
+                Some(value) -> value
+                None -> 0
+            }
+            return match backend.decode(status, exchange.responseBody, assembly.model) {
+                Ok(response) -> {
+                    finished = true
+                    eventsOf(move response)
+                }
+                Error(problem) -> fail(move problem)
+            }
+        }
+        // Without its end marker, a stream that stopped after saying why it
+        // finished is whole; one that did not was cut off.
+        if assembly.finish.isNone() {
+            return fail(.Malformed("the stream ended before the answer did"))
+        }
+        return complete()
+    }
+
+    function complete(borrow mut self) -> [StreamEvent] {
+        var out = match assembly.closeAll() {
+            Ok(closed) -> closed
+            Error(problem) -> return fail(move problem)
+        }
+        match assembly.completion() {
+            Ok(response) -> {
+                out.append(.UsageEvent(copy response.usage))
+                out.append(.Completed(move response))
+            }
+            Error(problem) -> out.append(.Failed(move problem))
+        }
+        finished = true
+        return out
+    }
+
+    function fail(borrow mut self, problem: AIError) -> [StreamEvent] {
+        finished = true
+        return [.Failed(move problem)]
+    }
+}

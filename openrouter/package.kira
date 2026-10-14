@@ -1,11 +1,12 @@
-// OpenRouter: the OpenAI protocol, plus provider routing. Built on `AIOpenAI` —
+// OpenRouter: the OpenAI protocol, plus provider routing. Built on `AIOpenAI`:
 // it encodes with the same functions and adds one block of its own.
-Package AIOpenRouter {
-    let version = "0.1.0"
-    let kind = .Library
-    let moduleRoot = "AIOpenRouter"
-    let dependencies = [
+construct AIOpenRouter extends Package {
+    let version: String = "0.2.0"
+    let kind: PackageKind = .Library
+    let moduleRoot: String = "AIOpenRouter"
+    let dependencies: [Dependency] = [
         Dependency { name: "AI", path: "../core" },
-        Dependency { name: "AIOpenAI", path: "../openai" }
+        Dependency { name: "AIOpenAI", path: "../openai" },
+        Dependency { name: "Network", path: "../../klf-kira/languages/kira/libraries/Network" }
     ]
 }

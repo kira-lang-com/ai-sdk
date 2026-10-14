@@ -1,10 +1,11 @@
 // The Anthropic Messages protocol: a different wire shape entirely, producing
 // the same canonical `Request` and `Response` as every other backend.
-Package AIAnthropic {
-    let version = "0.1.0"
-    let kind = .Library
-    let moduleRoot = "AIAnthropic"
-    let dependencies = [
-        Dependency { name: "AI", path: "../core" }
+construct AIAnthropic extends Package {
+    let version: String = "0.2.0"
+    let kind: PackageKind = .Library
+    let moduleRoot: String = "AIAnthropic"
+    let dependencies: [Dependency] = [
+        Dependency { name: "AI", path: "../core" },
+        Dependency { name: "Network", path: "../../klf-kira/languages/kira/libraries/Network" }
     ]
 }

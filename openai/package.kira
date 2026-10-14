@@ -1,10 +1,11 @@
-// The OpenAI wire protocol: canonical requests in, canonical responses out, the
-// chat-completions shape in between. `AIOpenRouter` builds on this same file.
-Package AIOpenAI {
-    let version = "0.1.0"
-    let kind = .Library
-    let moduleRoot = "AIOpenAI"
-    let dependencies = [
-        Dependency { name: "AI", path: "../core" }
+// The OpenAI wire protocol: canonical requests in, canonical responses out,
+// the chat-completions shape in between. `AIOpenRouter` builds on it.
+construct AIOpenAI extends Package {
+    let version: String = "0.2.0"
+    let kind: PackageKind = .Library
+    let moduleRoot: String = "AIOpenAI"
+    let dependencies: [Dependency] = [
+        Dependency { name: "AI", path: "../core" },
+        Dependency { name: "Network", path: "../../klf-kira/languages/kira/libraries/Network" }
     ]
 }

@@ -1,0 +1,103 @@
+import Foundation
+import AI
+import AIAnthropic
+import AIOpenAI
+import Network as Net
+
+// Whole generations over HTTP/3 on loopback: one `Network` is both the
+// services and the client, three generations share it, and each sees only
+// its own events.
+
+// The services: the Messages API streams, a chat-completions endpoint
+// answers whole, and a busy one refuses.
+function serveModel(network: borrow mut Net.Network, incoming: borrow Net.IncomingRequest) {
+    let path = incoming.message.target.path
+    var fields = Net.Fields {}
+    var status: Net.Status = .Ok
+    var body = ""
+    if path == "/v1/messages" {
+        fields.add("content-type", "text/event-stream")
+        body = anthropicFixture()
+    } else if path.startsWith("/busy/") {
+        fields.add("content-type", "application/json")
+        status = .TooManyRequests
+        body = "{\"error\":{\"message\":\"Slow down\",\"type\":\"rate_limit\"}}"
+    } else {
+        // A service that ignores the request to stream and answers whole.
+        fields.add("content-type", "application/json")
+        body = "{\"model\":\"echo-1\",\"choices\":[{\"message\":{\"content\":\"Hello there.\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":3,\"completion_tokens\":2}}"
+    }
+    absorb network.respond(incoming.request, Net.ResponseHead { status: status, fields: fields })
+    for piece in pieces(body, 200) { absorb network.write(incoming.request, piece) }
+    absorb network.finish(incoming.request, Net.Fields {})
+}
+
+construct GenerationsStreamOverHttp3() extends Test {
+    test {
+        let identity = match Net.testIdentity() {
+            Ok(value) -> value
+            Error(text) -> return text
+        }
+        let options = Net.NetworkOptions { anchors: Net.testAnchors(), transport: .Http3Only }
+        var network = match Net.openNetwork(move options) {
+            Ok(value) -> value
+            Error(failure) -> return traceText(failure)
+        }
+        let server = match network.serve(
+            Net.ServeOptions { address: "127.0.0.1:0", identity: move identity }
+        ) {
+            Ok(value) -> value
+            Error(failure) -> return traceText(failure)
+        }
+        let address = match network.address(server) {
+            Ok(value) -> value
+            Error(failure) -> return traceText(failure)
+        }
+        let base = "https://\(address)"
+        let gateways = [
+            gateway([AnthropicBackend(apiKey: "k", baseURL: base)]),
+            gateway([OpenAICompatibleBackend(baseURL: "\(base)/v1")]),
+            gateway([OpenAICompatibleBackend(baseURL: "\(base)/busy")])
+        ]
+        let request = Request {
+            model: testModel(),
+            messages: userTurn([.Text(TextPart { text: "Hi" })])
+        }
+        var generations: [Generation] = []
+        for flow in gateways {
+            match flow.start(network, request) {
+                Ok(generation) -> generations.append(generation)
+                Error(problem) -> return traceText(problem)
+            }
+        }
+        var notes: [[String]] = [[], [], []]
+        let deadline = network.now().plus(5000000)
+        while network.now().raw < deadline.raw {
+            for event in network.wait(.Some(deadline)) {
+                match event {
+                    Incoming(incoming) -> serveModel(network, incoming)
+                    else -> {}
+                }
+                for index in 0..generations.count {
+                    for produced in generations[index].take(event) {
+                        notes[index].append(describeEvent(produced))
+                    }
+                }
+            }
+            var done = true
+            for generation in generations { done = done && generation.finished }
+            if done { break }
+        }
+        var lines: [String] = []
+        for (index, generation) in generations.enumerated() {
+            lines.append("\(traceText(generation.exchange.status)) \(joined(notes[index], " | "))")
+        }
+        return joined(lines, " || ")
+    }
+    expect {
+        let e: Result<Any, TestFailure> = .Ok(
+            "Some(200) reason+ | ~Paris, then.~ | reason- | text+ | 'Let me ' | 'check.' | text- | call+ toolu_1 weather | args {\"city\": \"Par | args is\"} | call- weather {\"city\":\"Paris\"} | usage in Some(12) out Some(42) cached Some(4) cost None | done FinishReason.ToolCall Some(\"claude-opus-4-6\") [reason 'Paris, then.' Some(\"c2ln\"), text 'Let me check.', call toolu_1 weather {\"city\":\"Paris\"}] || Some(200) text+ | 'Hello there.' | text- | usage in Some(3) out Some(2) cached None cost None | done FinishReason.Completed Some(\"echo-1\") [text 'Hello there.'] || Some(429) failed AIError.Service(ServiceFailure { status: 429, kind: \"rate_limit\", message: \"Slow down\" })"
+        )
+        return e
+    }
+}
