@@ -18,7 +18,7 @@ struct Gateway {
         borrow self,
         network: borrow mut Net.Network,
         request: borrow Request,
-        until: Net.Instant
+        until: QuicInstant
     ) -> Result<Response, AIError> {
         let (route, wire) = try prepare(request, false)
         let answer = match network.fetch(move wire, until) {

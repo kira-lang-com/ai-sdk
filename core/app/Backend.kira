@@ -15,7 +15,7 @@
 import Foundation
 import Network as Net
 
-construct Backend {
+public construct Backend {
     // Where this backend sends: the destination half of a binding match.
     @Required let service: Service
     // The wire dialect this backend speaks: the protocol half of the match.
