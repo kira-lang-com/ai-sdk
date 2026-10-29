@@ -1,0 +1,20 @@
+//! What the Messages API receives for a conversation that has been through a
+//!
+//! The model's constant, with its identity, capabilities and endpoint, as the SDK catalogue declares it.
+import Foundation
+import AI
+import AIAnthropic
+import Network as Net
+
+// What the Messages API receives for a conversation that has been through a
+// tool call: the thinking block with its signature, the call, and the result.
+
+@Test
+function anthropicEncodesAToolConversation() {
+    let backend = AnthropicBackend(apiKey: "sk-secret")
+    expect!(
+        describeWire(
+            backend.encode("claude-x", toolConversation(), true)
+        ) == "https://api.anthropic.com/v1/messages {content-type: application/json, accept: text/event-stream, x-api-key: (x-api-key), anthropic-version: 2023-06-01} {\"model\":\"claude-x\",\"max_tokens\":100,\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Weather in Paris?\"}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Use the tool.\",\"signature\":\"c2ln\"},{\"type\":\"text\",\"text\":\"Checking.\"},{\"type\":\"tool_use\",\"id\":\"call_1\",\"name\":\"weather\",\"input\":{\"city\":\"Paris\"}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"call_1\",\"content\":\"18C, clear\"}]}],\"system\":\"Be brief.\",\"tools\":[{\"name\":\"weather\",\"description\":\"Weather for a city.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}}],\"stream\":true}"
+    )
+}

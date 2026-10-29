@@ -1,0 +1,92 @@
+//! OpenRouter, as a thin layer over the OpenAI-compatible implementation.
+//!
+//! The encoder and the decoders are `AIOpenAI`'s, imported, not copied. All
+//! this file adds is a `provider` block on the request body and a title
+//! header, which is the whole of what "OpenAI-compatible, plus routing
+//! controls" means.
+
+import Foundation
+import AI
+import AIOpenAI
+import Network as Net
+
+/// OpenRouter's provider-routing controls.
+///
+/// Every field is optional: an absent one leaves OpenRouter's own default in
+/// place, which is different from setting it. `order` is the preference order
+/// of upstream providers; `allowFallbacks` whether to try the next when the
+/// first refuses; `dataCollection` whether providers that keep prompts may
+/// serve at all.
+public struct OpenRouterOptions {
+    let order: [String]? = .None
+    let allowFallbacks: Bool? = .None
+    let dataCollection: Bool? = .None
+}
+
+/// The OpenRouter backend. OpenRouter takes reasoning back as `reasoning`.
+public construct OpenRouterBackend() extends Backend {
+    let apiKey: String
+    let options: OpenRouterOptions = OpenRouterOptions {}
+    let service: Service = .OpenRouter
+    let protocol: Protocol = .OpenAI
+    let region: Region? = .Some(.Global)
+    let baseURL: String = "https://openrouter.ai/api/v1"
+    // What OpenRouter attributes calls to on its dashboard.
+    let title: String = "Kira AI SDK"
+    let dialect: Dialect = Dialect { reasoningField: .Some("reasoning") }
+
+    /// Encodes `request` for `modelID` as this protocol's request body, streaming when `stream` is set.
+    function encode(
+        modelID: borrow String,
+        request: borrow Request,
+        stream: Bool
+    ) -> Result<Net.Request, AIError> {
+        var members = try openaiMembers(modelID, request, dialect, stream)
+        match providerBlock(options) {
+            Some(block) -> members.append(member("provider", move block))
+            None -> {}
+        }
+        let fields = [Net.Field { name: "x-title", value: copy title }]
+        return openaiRequest(baseURL, apiKey, fields, move members, request, stream)
+    }
+
+    /// Decodes a complete response with `status` and `body` into the SDK's `Response`, or the failure it names.
+    function decode(
+        status: Number,
+        body: borrow [UN8],
+        model: borrow Model
+    ) -> Result<Response, AIError> {
+        return openaiDecode(status, body, model)
+    }
+
+    /// Decodes one server-sent event into the stream events it completes, recording its parts in `assembly`.
+    function decodeEvent(
+        event: borrow Net.ServerEvent,
+        assembly: borrow mut StreamAssembly
+    ) -> Result<[StreamEvent], AIError> {
+        return openaiEvent(event, assembly)
+    }
+}
+
+/// The `provider` block for `options`, or none when no option is set.
+public function providerBlock(options: borrow OpenRouterOptions) -> JsonValue? {
+    var block: [JsonMember] = []
+    match options.order {
+        Some(order) -> {
+            var names: [JsonValue] = []
+            for name in order { names.append(.Text(copy name)) }
+            block.append(member("order", .Array(move names)))
+        }
+        None -> {}
+    }
+    match options.allowFallbacks {
+        Some(flag) -> block.append(member("allow_fallbacks", .Boolean(flag)))
+        None -> {}
+    }
+    match options.dataCollection {
+        Some(allow) -> block.append(member("data_collection", .Text(allow ? "allow" : "deny")))
+        None -> {}
+    }
+    if block.count == 0 { return .None }
+    return .Some(.Object(move block))
+}

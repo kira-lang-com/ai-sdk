@@ -1,0 +1,18 @@
+//! The nex-agi model names, mapped to the SDK's canonical model constants.
+import Foundation
+
+/// The free endpoint `nex-agi/nex-n2.5-mini:free`, reached through OpenRouter, as a remote model identity.
+let NexN25MiniFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "nex-agi/nex-n2.5-mini:free"
+}
+
+/// The free endpoint `nex-agi/nex-n2.5-pro:free`, reached through OpenRouter, as a remote model identity.
+let NexN25ProFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "nex-agi/nex-n2.5-pro:free"
+}

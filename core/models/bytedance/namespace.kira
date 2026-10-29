@@ -1,0 +1,10 @@
+//! The bytedance model names, mapped to the SDK's canonical model constants.
+/// The models of ByteDance Seed, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.ByteDance.Seed {
+    let Base = Seed16
+    let Code = Seed20Code
+    let Flash = Seed16Flash
+    let Lite = Seed20Lite
+    let Mini = Seed20Mini
+    let Turbo = Seed21Turbo
+}

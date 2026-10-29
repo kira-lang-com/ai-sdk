@@ -1,0 +1,115 @@
+//! Where a model can be reached, and the one rule routing turns on: whether a
+//! backend standing in one region may serve a remote binding scoped to another.
+//!
+//! Kira has no enum inheritance, so the narrowing it would give (`.USWest1`
+//! inside `.US`) is one flat enum plus `regionBroad`, which names each zone's
+//! bucket. Routing decides at run time anyway, so nothing is lost by checking
+//! the relation there.
+
+import Foundation
+
+/// A place a model is served from.
+///
+/// The four broad buckets are the coarse answer a binding usually needs — "some
+/// US endpoint" — and the named zones are the exact answer a Bedrock or Azure
+/// binding carries. A zone belongs to exactly one bucket, which `regionBroad`
+/// records and `regionNarrows` reads.
+public enum Region {
+    // Reachable from anywhere; no data-residency claim.
+    Global
+    // The broad buckets, named when a binding cares about the continent but not
+    // the datacentre.
+    US
+    EU
+    APAC
+
+    // AWS US zones.
+    USEast1
+    USEast2
+    USWest1
+    USWest2
+
+    // AWS EU zones.
+    EUCentral1
+    EUWest1
+    EUWest2
+    EUWest3
+
+    // AWS APAC zones.
+    APNortheast1
+    APNortheast2
+    APSoutheast1
+    APSoutheast2
+
+    // Azure US zones.
+    EastUS
+    EastUS2
+    WestUS
+    WestUS2
+    WestUS3
+
+    // Azure EU zones.
+    NorthEurope
+    WestEurope
+}
+
+/// The broad bucket a region belongs to: a bucket is its own, and a zone
+/// reports the continent it sits on. Every case is listed, so a new zone does
+/// not compile until it is given a bucket.
+public function regionBroad(region: borrow Region) -> Region {
+    return match region {
+        Global -> .Global
+        US -> .US
+        EU -> .EU
+        APAC -> .APAC
+        USEast1 -> .US
+        USEast2 -> .US
+        USWest1 -> .US
+        USWest2 -> .US
+        EastUS -> .US
+        EastUS2 -> .US
+        WestUS -> .US
+        WestUS2 -> .US
+        WestUS3 -> .US
+        EUCentral1 -> .EU
+        EUWest1 -> .EU
+        EUWest2 -> .EU
+        EUWest3 -> .EU
+        NorthEurope -> .EU
+        WestEurope -> .EU
+        APNortheast1 -> .APAC
+        APNortheast2 -> .APAC
+        APSoutheast1 -> .APAC
+        APSoutheast2 -> .APAC
+    }
+}
+
+/// Whether a backend in `backend` may serve a binding scoped to `remote`.
+///
+/// The exact case first: a backend serves the zone it is. Then the broad case: a
+/// backend pinned to `.USWest1` serves a binding that asks only for `.US`,
+/// because the zone is inside the bucket. The reverse is refused — a backend that
+/// only promised `.US` is not a licence to reach `.USWest1` specifically, since
+/// "somewhere in the US" and "this datacentre" are different promises.
+public function regionNarrows(backend: borrow Region, remote: borrow Region) -> Bool {
+    return backend == remote || regionBroad(backend) == remote
+}
+
+/// Whether a backend region satisfies a remote binding's region, when either may
+/// be unstated.
+///
+/// A binding with no region (`.None`) is reachable from anywhere: it made no
+/// residency claim, so nothing about a backend can violate it. A backend with no
+/// region cannot satisfy a binding that *does* claim one — an unplaced backend
+/// has not promised the residency the binding requires, and guessing it does is
+/// how a request scoped to the EU ends up served from the US.
+public function regionCompatible(backend: borrow Region?, remote: borrow Region?) -> Bool {
+    let wanted = match remote {
+        Some(value) -> value
+        None -> return true
+    }
+    return match backend {
+        Some(standing) -> regionNarrows(standing, wanted)
+        None -> false
+    }
+}

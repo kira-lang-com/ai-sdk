@@ -1,0 +1,109 @@
+//! A streamed completion end to end: the answer prints line by line as it
+//! arrives, then what it cost and which model served it.
+//!
+//!     ANTHROPIC_API_KEY=... kira run examples/demo -- "Why is the sky blue?"
+//!
+//! OPENROUTER_API_KEY or OPENAI_API_KEY work the same way. With no key set it
+//! says so and stops.
+
+import Foundation
+import AI
+import AIAnthropic
+import AIOpenAI
+import AIOpenRouter
+import Network as Net
+
+/// The constants of the Demo protocol: its paths and defaults, as the requests it encodes use them.
+namespace Demo {
+    // A minute for the whole answer.
+    let patience: Number = 60000000
+}
+
+/// The service a key is set for, its gateway, and the model to ask.
+public function chosen() -> (Gateway, Model, String)? {
+    let anthropic = environmentValue("ANTHROPIC_API_KEY")
+    if anthropic.count > 0 {
+        return .Some(
+            (
+                gateway([AnthropicBackend(apiKey: anthropic)]),
+                AI.Providers.Anthropic.Claude.v5_5.Sonnet,
+                "Anthropic"
+            )
+        )
+    }
+    let openRouter = environmentValue("OPENROUTER_API_KEY")
+    if openRouter.count > 0 {
+        return .Some(
+            (
+                gateway([OpenRouterBackend(apiKey: openRouter)]),
+                AI.Providers.Nvidia.Nemotron.v3.Super,
+                "OpenRouter"
+            )
+        )
+    }
+    let openAI = environmentValue("OPENAI_API_KEY")
+    if openAI.count > 0 {
+        return .Some(
+            (gateway([OpenAIBackend(apiKey: openAI)]), AI.Providers.OpenAI.GPT.v5_6.Sol, "OpenAI")
+        )
+    }
+    return .None
+}
+
+/// Runs the demo generation and prints each event as it arrives.
+@Main
+public function main() {
+    let (flow, model, service) = match chosen() {
+        Some(value) -> value
+        None -> return print(
+            "Set ANTHROPIC_API_KEY, OPENROUTER_API_KEY or OPENAI_API_KEY to stream a real answer."
+        )
+    }
+    let prompt = match processArgument(0) {
+        Some(text) -> text
+        None -> "In two sentences: why is the sky blue?"
+    }
+    var network = match Net.openNetwork(Net.NetworkOptions {}) {
+        Ok(value) -> value
+        Error(failure) -> return print("network: \(traceText(failure))")
+    }
+    let request = Request {
+        model: model,
+        messages: userTurn([.Text(TextPart { text: prompt })]),
+        maxTokens: .Some(512)
+    }
+    var generation = match flow.start(network, request) {
+        Ok(value) -> value
+        Error(problem) -> return print("refused before sending: \(traceText(problem))")
+    }
+    print("\(service), streaming:")
+    // Foundation prints whole lines, so text is held until a line ends.
+    var line = ""
+    let deadline = network.now().plus(Demo.patience)
+    while !generation.finished && network.now().raw < deadline.raw {
+        for event in network.wait(.Some(deadline)) {
+            for produced in generation.take(event) {
+                match produced {
+                    TextDelta(part) -> {
+                        line = line + part.text
+                        let parts = line.split("\n")
+                        line = parts[parts.count - 1]
+                        for index in 0..parts.count - 1 { print(parts[index]) }
+                    }
+                    Completed(response) -> {
+                        if line.count > 0 { print(line) }
+                        print(
+                            "-- \(traceText(response.finishReason)), served by \(traceText(response.servedModel)), \(traceText(response.usage.inputTokens)) in, \(traceText(response.usage.outputTokens)) out"
+                        )
+                    }
+                    Failed(problem) -> print("failed: \(traceText(problem))")
+                    else -> {}
+                }
+            }
+        }
+    }
+    if !generation.finished {
+        generation.cancel(network)
+        print("timed out")
+    }
+}

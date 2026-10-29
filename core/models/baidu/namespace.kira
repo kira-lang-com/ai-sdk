@@ -1,0 +1,5 @@
+//! The baidu model names, mapped to the SDK's canonical model constants.
+/// The models of Baidu ERNIE, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.Baidu.ERNIE {
+    let Vl424bA47b = Ernie45Vl424bA47b
+}

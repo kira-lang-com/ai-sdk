@@ -1,0 +1,23 @@
+//! The Messages API's stream decoded in pieces of seven bytes, so lines split
+//!
+//! The model's constant, with its identity, capabilities and endpoint, as the SDK catalogue declares it.
+import Foundation
+import AI
+import AIAnthropic
+
+// The Messages API's stream decoded in pieces of seven bytes, so lines split
+// across chunks, with a ping between blocks and arguments split in two.
+
+/// Thinking, its signature, text, and a tool call whose input arrives in pieces:
+/// each becomes its own event, and the completion carries the call.
+@Test
+function anthropicStreamsAssemble() {
+    let backend: Any Backend = AnthropicBackend(apiKey: "k")
+    expect!(
+        decodeStream(
+            backend,
+            anthropicFixture(),
+            7
+        ) == "reason+ | ~Paris, then.~ | reason- | text+ | 'Let me ' | 'check.' | text- | call+ toolu_1 weather | args {\"city\": \"Par | args is\"} | call- weather {\"city\":\"Paris\"} || true in Some(12) out Some(42) cached Some(4) cost None || FinishReason.ToolCall Some(\"claude-opus-4-6\") [reason 'Paris, then.' Some(\"c2ln\"), text 'Let me check.', call toolu_1 weather {\"city\":\"Paris\"}]"
+    )
+}

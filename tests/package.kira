@@ -1,0 +1,14 @@
+//! The SDK's tests: each protocol's codec against byte vectors, routing and
+//! validation, and whole generations streamed over HTTP/3 on loopback.
+/// The SDK's test package: codec, routing and refusal tests run against each protocol.
+construct AITests extends Package {
+    let version: String = "0.2.0"
+    let kind: PackageKind = .Library
+    let moduleRoot: String = "AITests"
+    let dependencies: [Dependency] = [
+        Dependency { name: "AI", path: "../core" },
+        Dependency { name: "AIOpenAI", path: "../openai" },
+        Dependency { name: "AIOpenRouter", path: "../openrouter" },
+        Dependency { name: "AIAnthropic", path: "../anthropic" }
+    ]
+}

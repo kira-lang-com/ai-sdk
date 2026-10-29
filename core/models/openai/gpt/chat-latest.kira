@@ -1,0 +1,31 @@
+//! OpenAI: GPT Chat Latest (openai/gpt-chat-latest)
+//!
+//! The model's constant, with its identity, capabilities and endpoint, as the SDK catalogue declares it.
+import Foundation
+
+/// OpenAI: GPT Chat Latest (openai/gpt-chat-latest)
+let GptChatLatest: Model = Model {
+    identity: ModelIdentity {
+        provider: .OpenAI,
+        family: .GPT,
+        variant: .None,
+        version: "chat-latest"
+    },
+    capabilities: ModelCapabilities {
+        input: [.Text, .Image, .File],
+        output: [.Text],
+        streaming: true,
+        toolCalling: true,
+        structuredOutput: true,
+        reasoning: false,
+        promptCaching: true
+    },
+    remoteIDs: [
+        RemoteModelID {
+            service: .OpenRouter,
+            protocol: .OpenAI,
+            region: .Some(.Global),
+            id: "openai/gpt-chat-latest"
+        }
+    ]
+}

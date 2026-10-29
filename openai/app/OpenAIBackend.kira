@@ -1,0 +1,88 @@
+//! The OpenAI backends: what a program constructs and hands to a gateway.
+//!
+//! `OpenAIBackend` pins the public endpoint; `OpenAICompatibleBackend` takes
+//! one, for any server that speaks the same protocol (a self-hosted model, a
+//! gateway, the loopback server the tests run).
+
+import Foundation
+import AI
+import Network as Net
+
+/// OpenAI itself. Its reasoning models refuse `max_tokens`.
+public construct OpenAIBackend() extends Backend {
+    let apiKey: String
+    let service: Service = .OpenAI
+    let protocol: Protocol = .OpenAI
+    let region: Region? = .Some(.Global)
+    let baseURL: String = "https://api.openai.com/v1"
+    let dialect: Dialect = Dialect { maxTokensField: "max_completion_tokens" }
+
+    /// Encodes `request` for `modelID` as this protocol's request body, streaming when `stream` is set.
+    function encode(
+        modelID: borrow String,
+        request: borrow Request,
+        stream: Bool
+    ) -> Result<Net.Request, AIError> {
+        let members = try openaiMembers(modelID, request, dialect, stream)
+        return openaiRequest(baseURL, apiKey, [], move members, request, stream)
+    }
+
+    /// Decodes a complete response with `status` and `body` into the SDK's `Response`, or the failure it names.
+    function decode(
+        status: Number,
+        body: borrow [UN8],
+        model: borrow Model
+    ) -> Result<Response, AIError> {
+        return openaiDecode(status, body, model)
+    }
+
+    /// Decodes one server-sent event into the stream events it completes, recording its parts in `assembly`.
+    function decodeEvent(
+        event: borrow Net.ServerEvent,
+        assembly: borrow mut StreamAssembly
+    ) -> Result<[StreamEvent], AIError> {
+        return openaiEvent(event, assembly)
+    }
+}
+
+/// Any endpoint that speaks the OpenAI protocol.
+///
+/// `service` defaults to `.Custom` and `region` to unplaced, so it routes for
+/// models bound to a custom service with no residency claim. Pointed at a
+/// known service, it names that service and region and is matched like any
+/// built-in backend.
+public construct OpenAICompatibleBackend() extends Backend {
+    let baseURL: String
+    let apiKey: String = ""
+    let service: Service = .Custom
+    let protocol: Protocol = .OpenAI
+    let region: Region? = .None
+    let dialect: Dialect = Dialect {}
+
+    /// Encodes `request` for `modelID` as this protocol's request body, streaming when `stream` is set.
+    function encode(
+        modelID: borrow String,
+        request: borrow Request,
+        stream: Bool
+    ) -> Result<Net.Request, AIError> {
+        let members = try openaiMembers(modelID, request, dialect, stream)
+        return openaiRequest(baseURL, apiKey, [], move members, request, stream)
+    }
+
+    /// Decodes a complete response with `status` and `body` into the SDK's `Response`, or the failure it names.
+    function decode(
+        status: Number,
+        body: borrow [UN8],
+        model: borrow Model
+    ) -> Result<Response, AIError> {
+        return openaiDecode(status, body, model)
+    }
+
+    /// Decodes one server-sent event into the stream events it completes, recording its parts in `assembly`.
+    function decodeEvent(
+        event: borrow Net.ServerEvent,
+        assembly: borrow mut StreamAssembly
+    ) -> Result<[StreamEvent], AIError> {
+        return openaiEvent(event, assembly)
+    }
+}

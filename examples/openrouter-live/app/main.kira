@@ -1,0 +1,82 @@
+//! One real completion through OpenRouter that should end in a tool call.
+//!
+//!     OPENROUTER_API_KEY=sk-or-... kira run examples/openrouter-live
+
+import Foundation
+import AI
+import AIOpenRouter
+import Network as Net
+
+/// The constants of the Live protocol: its paths and defaults, as the requests it encodes use them.
+namespace Live {
+    let patience: Number = 60000000
+}
+
+/// Runs the live generation against OpenRouter and prints its outputs.
+@Main
+public function main() {
+    let key = environmentValue("OPENROUTER_API_KEY")
+    if key.count == 0 {
+        print("OPENROUTER_API_KEY is not set. Set it and run again to send one real completion:")
+        print("    OPENROUTER_API_KEY=sk-or-... kira run examples/openrouter-live")
+        return
+    }
+    var network = match Net.openNetwork(Net.NetworkOptions {}) {
+        Ok(value) -> value
+        Error(failure) -> return print("network: \(traceText(failure))")
+    }
+    let flow = gateway([OpenRouterBackend(apiKey: key)])
+    let request = Request {
+        model: AI.Providers.Nvidia.Nemotron.v3.Super,
+        messages: userTurn(
+            [.Text(
+                TextPart { text: "What is the weather in Paris right now? Call the weather tool." }
+            )]
+        ),
+        tools: [weatherTool()],
+        maxTokens: .Some(512)
+    }
+    print("sending one completion with a tool to OpenRouter...")
+    let until = network.now().plus(Live.patience)
+    match flow.generate(network, request, until) {
+        Ok(response) -> {
+            for output in response.output { print(describeOutput(output)) }
+            print("served by \(traceText(response.servedModel)); \(traceText(response.usage))")
+        }
+        Error(problem) -> print("error: \(traceText(problem))")
+    }
+}
+
+/// A tool that takes a city and reports its weather, offered to the model in the example.
+public function weatherTool() -> Tool {
+    let city = JsonValue.Object(
+        [
+            member("type", .Text("string")),
+            member("description", .Text("The city to get the weather for."))
+        ]
+    )
+    let schema = JsonValue.Object(
+        [
+            member("type", .Text("object")),
+            member("properties", .Object([member("city", move city)])),
+            member("required", .Array([.Text("city")]))
+        ]
+    )
+    return Tool {
+        name: "get_weather",
+        description: "Get the current weather for a city.",
+        inputSchema: Schema { json: move schema }
+    }
+}
+
+/// Describes one output of a response as a line of text for the example to print.
+public function describeOutput(output: borrow Output) -> String {
+    return match output {
+        Text(part) -> "text: \(part.text)"
+        Call(call) -> "tool call: \(call.name)(\(writeJson(call.input)))"
+        Reason(reasoning) -> "reasoning: \(reasoning.text)"
+        Image(_) -> "image part"
+        Audio(_) -> "audio part"
+        Object(value) -> "object: \(writeJson(value))"
+    }
+}

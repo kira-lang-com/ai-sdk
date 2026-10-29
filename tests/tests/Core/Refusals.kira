@@ -1,0 +1,50 @@
+//! Refusals in each service's own words: an error document, an error status with
+//!
+//! The model's constant, with its identity, capabilities and endpoint, as the SDK catalogue declares it.
+import Foundation
+import AI
+import AIAnthropic
+import AIOpenAI
+import Network as Net
+
+// Refusals in each service's own words: an error document, an error status with
+// a proxy's page, and an answer cut off before it said anything.
+
+@Test
+function overloadedAnthropicErrorIsServiceFailure() {
+    let overloaded = "{\"type\":\"error\",\"error\":{\"type\":\"overloaded_error\",\"message\":\"Overloaded\"}}"
+    expect!(
+        (
+            traceText(anthropicDecode(529, overloaded.utf8(), testModel()))
+        ) == "Error(AIError.Service(ServiceFailure { status: 529, kind: \"overloaded_error\", message: \"Overloaded\" }))"
+    )
+}
+
+@Test
+function rateLimitedOpenAIErrorIsServiceFailure() {
+    let limited = "{\"error\":{\"message\":\"Rate limit reached\",\"type\":\"requests\",\"code\":\"rate_limit_exceeded\"}}"
+    expect!(
+        (
+            traceText(openaiDecode(429, limited.utf8(), testModel()))
+        ) == "Error(AIError.Service(ServiceFailure { status: 429, kind: \"requests\", message: \"Rate limit reached\" }))"
+    )
+}
+
+@Test
+function proxyPageIsAStatusRefusal() {
+    expect!(
+        (
+            traceText(openaiDecode(502, "<html>bad gateway</html>".utf8(), testModel()))
+        ) == "Error(AIError.Status(502))"
+    )
+}
+
+@Test
+function answerCutOffBeforeItSaidAnythingIsTruncated() {
+    let cut = "{\"model\":\"m\",\"choices\":[{\"message\":{\"content\":\"\"},\"finish_reason\":\"length\"}],\"usage\":{\"completion_tokens\":100}}"
+    expect!(
+        (
+            traceText(openaiDecode(200, cut.utf8(), testModel()))
+        ) == "Error(AIError.Truncated(Some(100)))"
+    )
+}

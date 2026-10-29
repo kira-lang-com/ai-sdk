@@ -1,0 +1,82 @@
+//! Choosing which backend serves a model, and letting a program teach the SDK
+//! endpoints it did not ship knowing.
+//!
+//! A model carries the routes it was declared with. A `RemoteCatalog` holds the
+//! rest — the ones a gateway or an application registers at run time — so a
+//! company's internal endpoint for a public model is a `register` call, not a
+//! fork of the model table. `Router.resolve` walks a model's routes against the
+//! configured backends and returns the first that agrees on service, protocol,
+//! and region.
+
+import Foundation
+
+/// One route a program taught the SDK: a canonical identity, and an endpoint it
+/// can also be reached at.
+public struct CatalogEntry {
+    let identity: ModelIdentity
+    let remoteID: RemoteModelID
+}
+
+/// The endpoints the SDK did not ship knowing.
+///
+/// A flat list rather than a map keyed by identity: the lists are short and a
+/// lookup is a walk either way. `register` is the only writer.
+public struct RemoteCatalog {
+    var additions: [CatalogEntry] = []
+
+    /// Every endpoint for `model`: the ones it was declared with, then the ones
+    /// a program registered for its identity.
+    function remoteIDs(borrow self, model: borrow Model) -> [RemoteModelID] {
+        var result = copy model.remoteIDs
+        for entry in additions {
+            if identityEquals(entry.identity, model.identity) { result.append(copy entry.remoteID) }
+        }
+        return result
+    }
+
+    /// Teach the SDK another endpoint for a model. The canonical identity does
+    /// not change; only another possible route is added.
+    function register(borrow mut self, identity: ModelIdentity, remoteID: RemoteModelID) {
+        additions.append(CatalogEntry { identity: move identity, remoteID: move remoteID })
+    }
+}
+
+/// A resolved decision: this backend, reached at this endpoint id.
+public struct Route {
+    let backend: Any Backend
+    let remoteID: RemoteModelID
+}
+
+/// The configured backends and the endpoints they can reach.
+public struct Router {
+    let backends: [Any Backend]
+    let catalog: RemoteCatalog = RemoteCatalog {}
+
+    /// The first backend that can serve `model`, and the endpoint id it serves
+    /// it at, or `NoRoute` when nothing matches.
+    ///
+    /// A backend serves a binding when they agree on service and protocol and
+    /// the backend's region narrows the binding's. Backends are tried in
+    /// configured order and bindings in declared order, so a program states a
+    /// preference ("OpenAI direct before OpenRouter") by the order it lists its
+    /// backends.
+    function resolve(borrow self, model: borrow Model) -> Result<Route, AIError> {
+        let remotes = catalog.remoteIDs(model)
+        for backend in backends {
+            for remote in remotes {
+                if remote.service == backend.service && remote.protocol == backend.protocol
+                    && regionCompatible(backend.region, remote.region) {
+                    return .Ok(Route { backend: copy backend, remoteID: copy remote })
+                }
+            }
+        }
+        return .Error(.NoRoute(copy model.identity))
+    }
+}
+
+/// Whether two identities name the same model. A model with a variant and one
+/// without are different models even when provider, family and version agree.
+public function identityEquals(a: borrow ModelIdentity, b: borrow ModelIdentity) -> Bool {
+    return a.provider == b.provider && a.family == b.family && a.version == b.version
+        && a.variant == b.variant
+}

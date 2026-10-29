@@ -1,0 +1,5 @@
+//! The dots-studio model names, mapped to the SDK's canonical model constants.
+/// The models of Dots Studio, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.DotsStudio {
+    let Dots3NotePreview = Dots3NotePreviewFree
+}

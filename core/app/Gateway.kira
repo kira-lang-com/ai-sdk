@@ -1,0 +1,86 @@
+//! The front door: validate, resolve, encode, send.
+//!
+//! A `Gateway` is what a program calls. It checks the request against the
+//! model locally, asks the `Router` which backend serves it, has that backend
+//! encode it, and sends it through the program's `Network`. Nothing above it
+//! names a backend, and nothing below it repeats the validation.
+
+import Foundation
+import Network as Net
+
+/// The entry point for completions: routes a request to the backend that serves its model.
+public struct Gateway {
+    let router: Router
+
+    /// The whole completion for `request`, waiting on `network` until
+    /// `until`, or why there is none. Events for other requests are kept for
+    /// the program's next `wait` or `poll`.
+    function generate(
+        borrow self,
+        network: borrow mut Net.Network,
+        request: borrow Request,
+        until: QuicInstant
+    ) -> Result<Response, AIError> {
+        let (route, wire) = try prepare(request, false)
+        let answer = match network.fetch(move wire, until) {
+            Ok(value) -> value
+            Error(failure) -> return .Error(.Transport(failure))
+        }
+        let body: [UN8] = match answer.body {
+            Empty -> []
+            Bytes(bytes) -> bytes
+        }
+        return route.backend.decode(code(answer.status), body, request.model)
+    }
+
+    /// Starts `request` as a stream: feed every event `network` gives to the
+    /// answer's `take`.
+    ///
+    /// Streaming is a capability, so a model that does not offer it is refused
+    /// here, before routing, rather than at a backend that would phrase it
+    /// worse.
+    function start(
+        borrow self,
+        network: borrow mut Net.Network,
+        request: borrow Request
+    ) -> Result<Generation, AIError> {
+        if !request.model.capabilities.streaming {
+            return .Error(.UnsupportedCapability("streaming"))
+        }
+        let (route, wire) = try prepare(request, true)
+        let exchange = exchangeOf(wire, route.remoteID.id)
+        let id = match network.send(move wire) {
+            Ok(value) -> value
+            Error(failure) -> return .Error(.Transport(failure))
+        }
+        return .Ok(
+            Generation {
+                id: id,
+                backend: route.backend,
+                assembly: StreamAssembly { model: copy request.model },
+                exchange: exchange
+            }
+        )
+    }
+
+    /// The order is deliberate: validate before routing, route before
+    /// encoding. A request the model cannot answer fails here, locally, with
+    /// the model named, never as a bill for a call that was doomed.
+    function prepare(borrow self, request: borrow Request, stream: Bool) -> Result<(
+        Route, Net.Request
+    ), AIError> {
+        match validateRequest(request) {
+            Some(problem) -> return .Error(problem)
+            None -> {}
+        }
+        let route = try router.resolve(request.model)
+        let wire = try route.backend.encode(route.remoteID.id, request, stream)
+        return .Ok((route, wire))
+    }
+}
+
+/// A gateway over `backends`, trying them in order, with the endpoints the
+/// models were declared with plus any `catalog` adds.
+public function gateway(backends: [Any Backend], catalog: RemoteCatalog = RemoteCatalog {}) -> Gateway {
+    return Gateway { router: Router { backends: move backends, catalog: move catalog } }
+}

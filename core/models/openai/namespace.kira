@@ -1,0 +1,128 @@
+//! The openai model names, mapped to the SDK's canonical model constants.
+/// The models of OpenAI GPT, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.OpenAI.GPT {
+    let v4 = Gpt4
+    let v4_1 = Gpt41
+    let v5 = Gpt5
+    let v5_1 = Gpt51
+    let v5_2 = Gpt52
+    let v5_4 = Gpt54
+    let v5_5 = Gpt55
+    let v6 = Gpt6Astra
+    let ChatLatest = GptChatLatest
+    let FourO = Gpt4o
+}
+
+/// The models of OpenAI GPT 3.5, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v3_5 {
+    let Turbo = Gpt35Turbo
+    let Turbo0613 = Gpt35Turbo0613
+    let Turbo16k = Gpt35Turbo16k
+    let TurboInstruct = Gpt35TurboInstruct
+}
+
+/// The models of OpenAI GPT 4, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v4 {
+    let Turbo = Gpt4Turbo
+    let TurboPreview = Gpt4TurboPreview
+}
+
+/// The models of OpenAI GPT 4.1, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v4_1 {
+    let Mini = Gpt41Mini
+    let Nano = Gpt41Nano
+}
+
+/// The models of OpenAI GPT FourO, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.FourO {
+    let v20240513 = Gpt4o20240513
+    let v20240806 = Gpt4o20240806
+    let v20241120 = Gpt4o20241120
+    let Mini = Gpt4oMini
+    let Mini20240718 = Gpt4oMini20240718
+}
+
+/// The models of OpenAI GPT 5, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v5 {
+    let Mini = Gpt5Mini
+    let Nano = Gpt5Nano
+    let Pro = Gpt5Pro
+}
+
+/// The models of OpenAI GPT 5.1, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v5_1 {
+    let Codex = Gpt51Codex
+    let CodexMax = Gpt51CodexMax
+    let CodexMini = Gpt51CodexMini
+}
+
+/// The models of OpenAI GPT 5.2, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v5_2 {
+    let Chat = Gpt52Chat
+    let Codex = Gpt52Codex
+    let Pro = Gpt52Pro
+}
+
+/// The models of OpenAI GPT 5.3, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v5_3 {
+    let Codex = Gpt53Codex
+}
+
+/// The models of OpenAI GPT 5.4, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v5_4 {
+    let Mini = Gpt54Mini
+    let Nano = Gpt54Nano
+    let Pro = Gpt54Pro
+}
+
+/// The models of OpenAI GPT 5.5, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v5_5 {
+    let Pro = Gpt55Pro
+}
+
+/// The models of OpenAI GPT 5.6, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v5_6 {
+    let Luna = Gpt56Luna
+    let LunaPro = Gpt56LunaPro
+    let Sol = Gpt56Sol
+    let SolPro = Gpt56SolPro
+    let Terra = Gpt56Terra
+    let TerraPro = Gpt56TerraPro
+}
+
+/// The models of OpenAI GPT 6, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.v6 {
+    let Astra = Gpt6Astra
+    let AstraPro = Gpt6AstraPro
+}
+
+/// The models of OpenAI GPT Oss, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.GPT.Oss {
+    let Oss120b = GptOss120b
+    let Oss20b = GptOss20b
+    let OssSafeguard20b = GptOssSafeguard20b
+}
+
+/// The models of OpenAI O, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.OpenAI.O {
+    let v1 = O1
+    let v3 = O3
+}
+
+/// The models of OpenAI O 1, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.O.v1 {
+    let Pro = O1Pro
+}
+
+/// The models of OpenAI O 3, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.O.v3 {
+    let Mini = O3Mini
+    let MiniHigh = O3MiniHigh
+    let Pro = O3Pro
+}
+
+/// The models of OpenAI O 4, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.OpenAI.O.v4 {
+    let Mini = O4Mini
+    let MiniHigh = O4MiniHigh
+}

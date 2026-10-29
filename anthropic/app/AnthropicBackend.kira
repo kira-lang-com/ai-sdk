@@ -1,0 +1,220 @@
+//! The Anthropic backend: the Messages API, in and out of canonical form.
+//!
+//! Nothing here is shared with the OpenAI protocol, because nothing can be:
+//! the wire differs from the auth header (`x-api-key`, not a bearer token) to
+//! the required `max_tokens` to the flat `content` array of typed blocks. What
+//! is shared is everything above this file: the same `Response`, the same
+//! `AIError`, the same `StreamEvent`s through the same `StreamAssembly`.
+
+import Foundation
+import AI
+import Network as Net
+
+/// The constants of the Anthropic protocol: its paths and defaults, as the requests it encodes use them.
+namespace Anthropic {
+    // The wire contract this encoder and decoder are written against.
+    let version: String = "2023-06-01"
+    let messagesPath: String = "/v1/messages"
+    let defaultMaxTokens: Number = 4096
+}
+
+/// The Anthropic backend. `maxTokens` is the ceiling sent when a request names
+/// none, because the Messages API requires one on every call.
+public construct AnthropicBackend() extends Backend {
+    let apiKey: String
+    let service: Service = .Anthropic
+    let protocol: Protocol = .Anthropic
+    let region: Region? = .Some(.Global)
+    let baseURL: String = "https://api.anthropic.com"
+    let maxTokens: Number = Anthropic.defaultMaxTokens
+
+    /// Encodes `request` for `modelID` as this protocol's request body, streaming when `stream` is set.
+    function encode(
+        modelID: borrow String,
+        request: borrow Request,
+        stream: Bool
+    ) -> Result<Net.Request, AIError> {
+        let document = try anthropicDocument(modelID, request, maxTokens, stream)
+        return postJson(
+            baseURL,
+            Anthropic.messagesPath,
+            credentialField("x-api-key", apiKey),
+            [Net.Field { name: "anthropic-version", value: Anthropic.version }],
+            document,
+            stream
+        )
+    }
+
+    /// Decodes a complete response with `status` and `body` into the SDK's `Response`, or the failure it names.
+    function decode(
+        status: Number,
+        body: borrow [UN8],
+        model: borrow Model
+    ) -> Result<Response, AIError> {
+        return anthropicDecode(status, body, model)
+    }
+
+    /// Decodes one server-sent event into the stream events it completes, recording its parts in `assembly`.
+    function decodeEvent(
+        event: borrow Net.ServerEvent,
+        assembly: borrow mut StreamAssembly
+    ) -> Result<[StreamEvent], AIError> {
+        return anthropicEvent(event, assembly)
+    }
+}
+
+/// The request document. The conversation becomes `messages` in order, the
+/// instructions `system`, and a caller's provider options (`thinking`, say)
+/// are merged in last.
+public function anthropicDocument(
+    modelID: borrow String,
+    request: borrow Request,
+    fallbackMaxTokens: Number,
+    stream: Bool
+) -> Result<JsonValue, AIError> {
+    // The Messages API has no structured-output parameter this encoder is
+    // written against, and quietly answering free text would break the
+    // caller's parser later instead of here.
+    if request.outputSchema.isSome() {
+        return .Error(.UnsupportedCapability("structured-output"))
+    }
+    var messages: [JsonValue] = []
+    for message in request.messages { messages.append(try anthropicMessage(message)) }
+    let ceiling = match request.maxTokens {
+        Some(value) -> value
+        None -> fallbackMaxTokens
+    }
+    var body = [
+        member("model", .Text(copy modelID)),
+        member("max_tokens", .Number(ceiling)),
+        member("messages", .Array(messages))
+    ]
+    match request.instructions {
+        Some(text) -> body.append(member("system", .Text(copy text)))
+        None -> {}
+    }
+    if request.tools.count > 0 { body.append(member("tools", anthropicTools(request.tools))) }
+    if stream { body.append(member("stream", .Boolean(true))) }
+    return .Ok(mergedObject(move body, request.providerOptions))
+}
+
+/// One conversation turn as a Messages-API message.
+///
+/// A tool turn is a user message of `tool_result` blocks, because the Messages
+/// API carries results inside the user role. Replayed thinking keeps its
+/// signature; thinking without one is left out, since the API refuses it.
+public function anthropicMessage(message: borrow Message) -> Result<JsonValue, AIError> {
+    var blocks: [JsonValue] = []
+    // Results travel in the user role.
+    var role = "user"
+    match message {
+        User(parts) -> {
+            for part in parts { blocks.append(try anthropicInput(part)) }
+        }
+        Assistant(outputs) -> {
+            role = "assistant"
+            for output in outputs {
+                match output {
+                    Text(body) -> blocks.append(textBlock(body.text))
+                    Reason(reasoning) -> {
+                        match reasoning.signature {
+                            Some(signature) -> blocks.append(
+                                .Object(
+                                    [
+                                        member("type", .Text("thinking")),
+                                        member("thinking", .Text(copy reasoning.text)),
+                                        member("signature", .Text(copy signature))
+                                    ]
+                                )
+                            )
+                            None -> {}
+                        }
+                    }
+                    Call(call) -> blocks.append(
+                        .Object(
+                            [
+                                member("type", .Text("tool_use")),
+                                member("id", .Text(copy call.id)),
+                                member("name", .Text(copy call.name)),
+                                member("input", copy call.input)
+                            ]
+                        )
+                    )
+                    Image(_) -> {}
+                    Audio(_) -> {}
+                    Object(value) -> blocks.append(textBlock(writeJson(value)))
+                }
+            }
+        }
+        ToolResults(results) -> {
+            for result in results {
+                // Text goes as itself; anything else as its JSON.
+                let content = match result.output.text() {
+                    Some(text) -> text
+                    None -> writeJson(result.output)
+                }
+                blocks.append(
+                    .Object(
+                        [
+                            member("type", .Text("tool_result")),
+                            member("tool_use_id", .Text(copy result.id)),
+                            member("content", .Text(content))
+                        ]
+                    )
+                )
+            }
+        }
+    }
+    return .Ok(.Object([member("role", .Text(role)), member("content", .Array(blocks))]))
+}
+
+/// A text content block with `text`, as the Messages API takes it.
+public function textBlock(text: borrow String) -> JsonValue {
+    return .Object([member("type", .Text("text")), member("text", .Text(copy text))])
+}
+
+/// One input part as a content block. Images and documents are native; the
+/// API has no audio or video block, and sending either as a document would be
+/// refused by the service in worse words.
+public function anthropicInput(part: borrow Input) -> Result<JsonValue, AIError> {
+    return match part {
+        Text(body) -> .Ok(textBlock(body.text))
+        Image(image) -> .Ok(mediaBlock("image", image.mediaType, image.base64))
+        File(file) -> .Ok(mediaBlock("document", file.mediaType, file.base64))
+        Audio(_) -> .Error(.UnsupportedInputModality(.Audio))
+        Video(_) -> .Error(.UnsupportedInputModality(.Video))
+    }
+}
+
+/// A base64 media block, `image` or `document`.
+public function mediaBlock(
+    kind: borrow String,
+    mediaType: borrow String,
+    base64: borrow String
+) -> JsonValue {
+    let source = JsonValue.Object(
+        [
+            member("type", .Text("base64")),
+            member("media_type", .Text(copy mediaType)),
+            member("data", .Text(copy base64))
+        ]
+    )
+    return .Object([member("type", .Text(copy kind)), member("source", move source)])
+}
+
+/// The `tools` array: Anthropic names the argument schema `input_schema`.
+public function anthropicTools(tools: borrow [Tool]) -> JsonValue {
+    var items: [JsonValue] = []
+    for tool in tools {
+        items.append(
+            .Object(
+                [
+                    member("name", .Text(copy tool.name)),
+                    member("description", .Text(copy tool.description)),
+                    member("input_schema", copy tool.inputSchema.json)
+                ]
+            )
+        )
+    }
+    return .Array(items)
+}

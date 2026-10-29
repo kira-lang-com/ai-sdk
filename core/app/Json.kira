@@ -1,0 +1,80 @@
+//! Reading and building the JSON documents every protocol speaks.
+//!
+//! A service's document is external data: a field may be absent, null or the
+//! wrong shape after any deployment. Each reader here answers a plain default
+//! or an optional for all three, so a decoder states what it needs once and a
+//! surprise is a decoding decision, never a trap.
+
+import Foundation
+
+/// One member of an object, for building documents in order.
+public function member(name: borrow String, value: JsonValue) -> JsonMember {
+    return JsonMember { name: copy name, value: move value }
+}
+
+/// The value at `name`, or `null` when `value` is not an object or lacks it.
+public function jsonAt(value: borrow JsonValue, name: borrow String) -> JsonValue {
+    return match value.field(name) {
+        Some(found) -> found
+        None -> .Null
+    }
+}
+
+/// The text at `name`, or "" when it is absent or not text.
+public function jsonText(value: borrow JsonValue, name: borrow String) -> String {
+    return match jsonAt(value, name).text() {
+        Some(text) -> text
+        None -> ""
+    }
+}
+
+/// The text at `name`, or nothing when it is absent or not text.
+public function jsonOptionalText(value: borrow JsonValue, name: borrow String) -> String? {
+    return jsonAt(value, name).text()
+}
+
+/// The number at `name`, or nothing when it is absent or not a number.
+public function jsonNumber(value: borrow JsonValue, name: borrow String) -> Number? {
+    return jsonAt(value, name).number()
+}
+
+/// The items at `name`, or none when it is absent or not an array.
+public function jsonItems(value: borrow JsonValue, name: borrow String) -> [JsonValue] {
+    return match jsonAt(value, name).items() {
+        Some(items) -> items
+        None -> []
+    }
+}
+
+/// An object with `extra`'s members added after `members`, for a caller's
+/// provider options: a later member wins when a name repeats, as `field` reads.
+public function mergedObject(members: [JsonMember], extra: borrow JsonValue?) -> JsonValue {
+    var all = move members
+    match extra {
+        Some(options) -> {
+            match options.members() {
+                Some(added) -> all.appendAll(added)
+                None -> {}
+            }
+        }
+        None -> {}
+    }
+    return .Object(all)
+}
+
+/// A document's text as UTF-8 bytes, ready for a request body.
+public function jsonBytes(value: borrow JsonValue) -> [UN8] {
+    return writeJson(value).utf8()
+}
+
+/// A body parsed as JSON, or why it is not.
+public function parseBody(body: borrow [UN8]) -> Result<JsonValue, AIError> {
+    let text = match textFromBytes(body) {
+        Some(value) -> value
+        None -> return .Error(.Malformed("the body is not UTF-8"))
+    }
+    return match parseJson(text) {
+        Ok(document) -> .Ok(document)
+        Error(problem) -> .Error(.Malformed("the body is not JSON: \(traceText(problem))"))
+    }
+}

@@ -1,0 +1,80 @@
+//! Region narrowing, route selection and local validation: all decided before a
+//!
+//! The model's constant, with its identity, capabilities and endpoint, as the SDK catalogue declares it.
+import Foundation
+import AI
+import AIAnthropic
+import AIOpenAI
+import AIOpenRouter
+import Network as Net
+
+// Region narrowing, route selection and local validation: all decided before a
+// byte is sent.
+
+@Test
+function regionsNarrowToTheirOwnArea() {
+    expect!((String(regionNarrows(.USWest1, .US))) == "true")
+    expect!((String(!regionNarrows(.EUWest1, .US))) == "true")
+    expect!((String(!regionNarrows(.US, .USWest1))) == "true")
+}
+
+@Test
+function unpinnedRegionsAreCompatibleWithAnyRequest() {
+    expect!((String(regionCompatible(.Some(.EUWest1), .None))) == "true")
+    expect!((String(!regionCompatible(.None, .Some(.EU)))) == "true")
+}
+
+/// Backends are tried in the order given, so order is the preference.
+@Test
+function routesFollowBackendOrder() {
+    let model = AI.Providers.OpenAI.GPT.v5_6.Sol
+    let direct = Router { backends: [OpenAIBackend(apiKey: "a"), OpenRouterBackend(apiKey: "b")] }
+    let routed = Router { backends: [OpenRouterBackend(apiKey: "b"), OpenAIBackend(apiKey: "a")] }
+    let none = Router { backends: [AnthropicBackend(apiKey: "c")] }
+    let direction = match direct.resolve(model) {
+        Ok(route) -> "\(traceText(route.remoteID.service)) \(route.remoteID.id)"
+        Error(problem) -> traceText(problem)
+    }
+    let preferred = match routed.resolve(model) {
+        Ok(route) -> "\(traceText(route.remoteID.service)) \(route.remoteID.id)"
+        Error(problem) -> traceText(problem)
+    }
+    let unsupported = match none.resolve(model) {
+        Ok(route) -> "\(traceText(route.remoteID.service)) \(route.remoteID.id)"
+        Error(problem) -> traceText(problem)
+    }
+    expect!((direction) == "Service.OpenAI gpt-5.6-sol")
+    expect!((preferred) == "Service.OpenRouter openai/gpt-5.6-sol")
+    expect!((unsupported) == "Service.Anthropic proxy.openai.gpt-5.6-sol")
+}
+
+/// A model that does not read video refuses it locally, and a backend that
+/// cannot carry structured output says so instead of answering free text.
+@Test
+function modalityIsCheckedLocally() {
+    let video = Request {
+        model: AI.Providers.Anthropic.Claude.v4_6.Opus,
+        messages: userTurn([.Video(VideoPart { mediaType: "video/mp4", base64: "AAAA" })])
+    }
+    expect!(
+        (
+            traceText(validateRequest(video))
+        ) == "Some(AIError.UnsupportedInputModality(Modality.Video))"
+    )
+}
+
+@Test
+function structuredOutputIsRefusedByABackendThatLacksIt() {
+    let shaped = Request {
+        model: testModel(),
+        messages: userTurn([.Text(TextPart { text: "List three." })]),
+        outputSchema: .Some(Schema { json: .Object([]) })
+    }
+    let backend = AnthropicBackend(apiKey: "k")
+    expect!((traceText(validateRequest(shaped))) == "None")
+    expect!(
+        (
+            outcome(backend.encode("m", shaped, false))
+        ) == "AIError.UnsupportedCapability(\"structured-output\")"
+    )
+}

@@ -1,0 +1,13 @@
+//! The nvidia model names, mapped to the SDK's canonical model constants.
+/// The models of NVIDIA Nemotron 3, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Nvidia.Nemotron.v3 {
+    let NanoOmni30bA3bReasoningFree = Nemotron3NanoOmni30bA3bReasoningFree
+    let Super120bFree = Nemotron3Super120bFree
+    let Ultra550bFree = Nemotron3Ultra550bFree
+}
+
+/// The models of NVIDIA Nemotron 3.5, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Nvidia.Nemotron.v3_5 {
+    let ContentSafetyFree = Nemotron35ContentSafetyFree
+    let LightningFree = Nemotron35LightningFree
+}

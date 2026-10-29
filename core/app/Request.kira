@@ -1,0 +1,139 @@
+//! A request, a response, what it cost, and the ways it can go wrong: the
+//! values that cross the `Backend` seam in both directions.
+//!
+//! Kira answers with values, not exceptions: a `Gateway` returns
+//! `Result<Response, AIError>`, and every way a call can fail is a case of
+//! `AIError` a caller matches like any other outcome.
+
+import Foundation
+import Network as Net
+
+/// One generation request, in canonical form.
+///
+/// `instructions` is the system prompt, which every protocol carries apart
+/// from the conversation. `maxTokens` caps the answer; a backend sends its own
+/// default when it is absent, because a service that defaults an absent
+/// ceiling to the model's maximum bills against a budget nobody asked for.
+/// `outputSchema` asks for structured output; `providerOptions` is an escape
+/// hatch for a knob the canonical surface does not name, merged into the
+/// request document untouched.
+public struct Request {
+    let model: Model
+    let messages: [Message]
+    let instructions: String? = .None
+    let tools: [Tool] = []
+    let maxTokens: Number? = .None
+    let outputSchema: Schema? = .None
+    let providerOptions: JsonValue? = .None
+}
+
+/// What a generation cost.
+///
+/// Every field is optional because not every service reports every number, and
+/// a `0` that means "not reported" reads exactly like a `0` that means "none".
+/// `cost` is the service's own figure when it gives one, never a number this
+/// SDK computes from a price table it would have to keep current.
+public struct Usage {
+    let inputTokens: Number? = .None
+    let outputTokens: Number? = .None
+    let cacheReadTokens: Number? = .None
+    let cacheWriteTokens: Number? = .None
+    let reasoningTokens: Number? = .None
+    let cost: Number? = .None
+}
+
+/// A completion.
+///
+/// `model` is what was asked for; `servedModel` is what the service says
+/// answered. They differ when a provider falls back to another model, and a
+/// caller must be able to say so rather than show the requested name.
+/// `providerMetadata` keeps what the service returned that has no canonical
+/// home.
+public struct Response {
+    let model: Model
+    let output: [Output]
+    let usage: Usage
+    let finishReason: FinishReason
+    let servedModel: String? = .None
+    let providerMetadata: JsonValue? = .None
+}
+
+/// The service's own account of a refusal: the status, its error type when it
+/// names one, and the message worth showing a user.
+public struct ServiceFailure {
+    let status: Number
+    let kind: String
+    let message: String
+}
+
+/// Why a request produced no usable answer.
+///
+/// Routing and transport failures share one enum because a `Gateway` call can
+/// end in either, and a caller wants one thing to match.
+public enum AIError {
+    // No configured backend can serve this model: nothing matched service,
+    // protocol and region together.
+    NoRoute(ModelIdentity)
+    // The model cannot do what the request asked (tool calling, streaming);
+    // the string names which.
+    UnsupportedCapability(String)
+    // The request sent a modality the model does not read.
+    UnsupportedInputModality(Modality)
+    // A base URL that is not an absolute https URL, or one that would carry a
+    // key in cleartext.
+    InvalidEndpoint(String)
+    // The service was never reached, or the exchange broke off.
+    Transport(Net.HttpFailure)
+    // The service refused with a status and an error document.
+    Service(ServiceFailure)
+    // A status with no error document to explain it.
+    Status(Number)
+    // A body that is not the document this expects.
+    Malformed(String)
+    // The answer ran out of room before it said anything; the output tokens
+    // it spent, when reported.
+    Truncated(Number?)
+}
+
+/// Whether a request is one this model can answer, checked before any network
+/// I/O: the first problem, or nothing.
+///
+/// Local because the model may have been chosen at run time, where the compiler
+/// could not know its capabilities.
+public function validateRequest(request: borrow Request) -> AIError? {
+    // Only what a caller sends is checked against what the model reads: an
+    // assistant turn and a tool result replay the conversation, and a model
+    // that produced an output can be handed it back.
+    for message in request.messages {
+        match message {
+            User(parts) -> {
+                for part in parts {
+                    let modality = inputModality(part)
+                    if !request.model.acceptsInput(modality) {
+                        return .Some(.UnsupportedInputModality(modality))
+                    }
+                }
+            }
+            Assistant(_) -> {}
+            ToolResults(_) -> {}
+        }
+    }
+    if request.tools.count > 0 && !request.model.capabilities.toolCalling {
+        return .Some(.UnsupportedCapability("tool-calling"))
+    }
+    if request.outputSchema.isSome() && !request.model.capabilities.structuredOutput {
+        return .Some(.UnsupportedCapability("structured-output"))
+    }
+    return .None
+}
+
+/// The modality one input part carries.
+public function inputModality(part: borrow Input) -> Modality {
+    return match part {
+        Text(_) -> .Text
+        Image(_) -> .Image
+        Audio(_) -> .Audio
+        Video(_) -> .Video
+        File(_) -> .File
+    }
+}

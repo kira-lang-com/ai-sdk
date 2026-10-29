@@ -1,0 +1,11 @@
+//! The tencent model names, mapped to the SDK's canonical model constants.
+/// The models of Tencent Hunyuan, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.Tencent.Hunyuan {
+    let Base = Hy3
+    let Instruct = HunyuanA13bInstruct
+    let Model18b = HyMt218b
+    let Model30bA3b = HyMt230bA3b
+    let Model7b = HyMt27b
+    let Preview = Hy4Preview
+    let PreviewV3 = Hy3Preview
+}

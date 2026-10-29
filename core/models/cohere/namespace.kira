@@ -1,0 +1,5 @@
+//! The cohere model names, mapped to the SDK's canonical model constants.
+/// The models of Cohere, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Cohere {
+    let NorthMiniCodeFree = CohereNorthMiniCodeFree
+}

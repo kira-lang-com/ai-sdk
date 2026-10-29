@@ -1,0 +1,6 @@
+//! The stepfun model names, mapped to the SDK's canonical model constants.
+/// The models of StepFun Step, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.StepFun.Step {
+    let Flash = Step37Flash
+    let FlashV35 = Step35Flash
+}

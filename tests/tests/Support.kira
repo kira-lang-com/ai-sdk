@@ -1,0 +1,131 @@
+//! Stream events and responses as short text, so a test states what it expects
+//!
+//! The model's constant, with its identity, capabilities and endpoint, as the SDK catalogue declares it.
+import Foundation
+import AI
+import Network as Net
+
+// Stream events and responses as short text, so a test states what it expects
+// in one line; text cut into network-sized pieces; and the decoder driver.
+
+/// Describes one stream event as a short text, marking each start and end, for assertions on a whole stream.
+function describeEvent(event: borrow StreamEvent) -> String {
+    return match event {
+        TextStart -> "text+"
+        TextDelta(part) -> "'\(part.text)'"
+        TextEnd -> "text-"
+        ReasoningStart -> "reason+"
+        ReasoningDelta(part) -> "~\(part.text)~"
+        ReasoningEnd -> "reason-"
+        ToolCallStart(opened) -> "call+ \(opened.id) \(opened.name)"
+        ToolCallDelta(delta) -> "args \(delta.json)"
+        ToolCallEnd(call) -> "call- \(call.name) \(writeJson(call.input))"
+        UsageEvent(usage) -> "usage \(describeUsage(usage))"
+        Completed(response) -> "done \(describeResponse(response))"
+        Failed(problem) -> "failed \(traceText(problem))"
+    }
+}
+
+/// Describes each event in order, separated by bars, so one assertion compares a whole stream.
+function describeEvents(events: borrow [StreamEvent]) -> String {
+    var parts: [String] = []
+    for event in events { parts.append(describeEvent(event)) }
+    return joined(parts, " | ")
+}
+
+/// Describes a usage record: input, output and cached tokens, and the cost.
+function describeUsage(usage: borrow Usage) -> String {
+    return "in \(traceText(usage.inputTokens)) out \(traceText(usage.outputTokens)) cached \(traceText(usage.cacheReadTokens)) cost \(traceText(usage.cost))"
+}
+
+/// Describes a complete response by its outputs, in order.
+function describeResponse(response: borrow Response) -> String {
+    var parts: [String] = []
+    for output in response.output {
+        parts.append(
+            match output {
+                Text(part) -> "text '\(part.text)'"
+                Reason(part) -> "reason '\(part.text)' \(traceText(part.signature))"
+                Call(call) -> "call \(call.id) \(call.name) \(writeJson(call.input))"
+                Image(_) -> "image"
+                Audio(_) -> "audio"
+                Object(value) -> "object \(writeJson(value))"
+            }
+        )
+    }
+    return "\(traceText(response.finishReason)) \(traceText(response.servedModel)) [\(joined(parts, ", "))]"
+}
+
+/// `text` cut into pieces of `size` bytes, as a network might deliver it.
+function pieces(text: borrow String, size: Number) -> [[UN8]] {
+    let bytes = text.utf8()
+    var out: [[UN8]] = []
+    var start = 0
+    while start < bytes.count {
+        let end = min(start + size, bytes.count)
+        var piece: [UN8] = []
+        for index in start..end { piece.append(bytes[index]) }
+        out.append(piece)
+        start = end
+    }
+    return out
+}
+
+/// The events a backend's decoder makes of a whole SSE body delivered in
+/// pieces, and the completion at the end, as `Generation` would.
+function decodeStream(backend: borrow Any Backend, body: borrow String, size: Number) -> String {
+    var stream = Net.EventStream {}
+    var assembly = StreamAssembly { model: testModel() }
+    var events: [StreamEvent] = []
+    for piece in pieces(body, size) {
+        if !stream.feed(piece) { return "line too long" }
+        while true {
+            let event = match stream.event() {
+                Some(value) -> value
+                None -> break
+            }
+            match backend.decodeEvent(event, assembly) {
+                Ok(produced) -> events.appendAll(produced)
+                Error(problem) -> return "\(describeEvents(events)) | failed \(traceText(problem))"
+            }
+        }
+    }
+    match assembly.closeAll() {
+        Ok(closed) -> events.appendAll(closed)
+        Error(problem) -> return "failed \(traceText(problem))"
+    }
+    let ending = match assembly.completion() {
+        Ok(response) -> describeResponse(response)
+        Error(problem) -> traceText(problem)
+    }
+    return "\(describeEvents(events)) || \(assembly.ended) \(describeUsage(assembly.usage)) || \(ending)"
+}
+
+/// A model every test backend can serve: one binding per service.
+function testModel() -> Model {
+    var remotes: [RemoteModelID] = []
+    for service in [Service.Anthropic, Service.OpenAI, Service.OpenRouter, Service.Custom] {
+        let protocol: Protocol = service == .Anthropic ? .Anthropic : .OpenAI
+        remotes.append(
+            RemoteModelID { service: service, protocol: protocol, region: .None, id: "test-model" }
+        )
+    }
+    return Model {
+        identity: ModelIdentity {
+            provider: .Custom,
+            family: .Custom,
+            variant: .None,
+            version: "1"
+        },
+        capabilities: ModelCapabilities {
+            input: [.Text, .Image],
+            output: [.Text],
+            streaming: true,
+            toolCalling: true,
+            structuredOutput: true,
+            reasoning: true,
+            promptCaching: true
+        },
+        remoteIDs: remotes
+    }
+}

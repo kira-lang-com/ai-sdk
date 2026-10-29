@@ -1,0 +1,10 @@
+//! The cohere model names, mapped to the SDK's canonical model constants.
+import Foundation
+
+/// The free endpoint `cohere/north-mini-code:free`, reached through OpenRouter, as a remote model identity.
+let CohereNorthMiniCodeFree: RemoteModelID = RemoteModelID {
+    service: .OpenRouter,
+    protocol: .OpenAI,
+    region: .Some(.Global),
+    id: "cohere/north-mini-code:free"
+}

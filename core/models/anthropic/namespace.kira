@@ -1,0 +1,31 @@
+//! The anthropic model names, mapped to the SDK's canonical model constants.
+/// The models of Anthropic Claude Fable, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.Anthropic.Claude.Fable {
+    let v5 = ClaudeFable5
+    let v5_1 = ClaudeFable51
+}
+
+/// The models of Anthropic Claude Haiku, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.Anthropic.Claude.Haiku {
+    let v3 = ClaudeHaiku3
+    let v4_5 = ClaudeHaiku45
+}
+
+/// The models of Anthropic Claude Opus, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.Anthropic.Claude.Opus {
+    let v4 = ClaudeOpus4
+    let v4_1 = ClaudeOpus41
+    let v4_5 = ClaudeOpus45
+    let v4_6 = ClaudeOpus46
+    let v4_7 = ClaudeOpus47
+    let v4_8 = ClaudeOpus48
+    let v5 = ClaudeOpus5
+}
+
+/// The models of Anthropic Claude Sonnet, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.Anthropic.Claude.Sonnet {
+    let v4 = ClaudeSonnet4
+    let v4_5 = ClaudeSonnet45
+    let v4_6 = ClaudeSonnet46
+    let v5 = ClaudeSonnet5
+}

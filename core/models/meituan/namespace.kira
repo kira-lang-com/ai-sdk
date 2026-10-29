@@ -1,0 +1,5 @@
+//! The meituan model names, mapped to the SDK's canonical model constants.
+/// The models of Meituan LongCat, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.Meituan.LongCat {
+    let V20 = LongCat20
+}

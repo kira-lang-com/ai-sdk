@@ -1,0 +1,6 @@
+//! The nex-agi model names, mapped to the SDK's canonical model constants.
+/// The models of Nex AGI, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.NexAGI {
+    let N25MiniFree = NexN25MiniFree
+    let N25ProFree = NexN25ProFree
+}

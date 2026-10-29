@@ -1,0 +1,21 @@
+//! The chat-completions stream decoded in pieces of five bytes: reasoning, text,
+//!
+//! The model's constant, with its identity, capabilities and endpoint, as the SDK catalogue declares it.
+import Foundation
+import AI
+import AIOpenAI
+
+// The chat-completions stream decoded in pieces of five bytes: reasoning, text,
+// a tool call split over chunks, the finish, and the usage chunk with no choices.
+
+@Test
+function openAIStreamsAssemble() {
+    let backend: Any Backend = OpenAICompatibleBackend(baseURL: "https://example.com/v1")
+    expect!(
+        decodeStream(
+            backend,
+            openaiFixture(),
+            5
+        ) == "reason+ | ~Hmm.~ | reason- | text+ | 'On it' | text- | call+ call_9 weather | args {\"city\": | args \"Oslo\"} | call- weather {\"city\":\"Oslo\"} || true in Some(20) out Some(9) cached Some(0) cost Some(0.0012) || FinishReason.ToolCall Some(\"gpt-x-2026\") [reason 'Hmm.' None, text 'On it', call call_9 weather {\"city\":\"Oslo\"}]"
+    )
+}

@@ -1,0 +1,40 @@
+//! A key never travels in cleartext: a plain-HTTP endpoint is refused, a local
+//!
+//! The model's constant, with its identity, capabilities and endpoint, as the SDK catalogue declares it.
+import Foundation
+import AI
+import AIAnthropic
+import AIOpenAI
+import Network as Net
+
+// A key never travels in cleartext: a plain-HTTP endpoint is refused, a local
+// one is allowed, and a URL that is not one is refused.
+
+@Test
+function plainHttpEndpointRefusesTheKey() {
+    let request = toolConversation()
+    let plain = OpenAICompatibleBackend(baseURL: "http://example.com/v1", apiKey: "sk")
+    expect!(
+        (
+            outcome(plain.encode("m", request, false))
+        ) == "AIError.InvalidEndpoint(\"http://example.com/v1 is not https, and a key must not travel in cleartext\")"
+    )
+}
+
+@Test
+function localEndpointMayBePlainHttp() {
+    let request = toolConversation()
+    let local = OpenAICompatibleBackend(baseURL: "http://127.0.0.1:8080/v1")
+    expect!((outcome(local.encode("m", request, false))) == "ok")
+}
+
+@Test
+function aURLThatIsNotAURLIsRefused() {
+    let request = toolConversation()
+    let broken = AnthropicBackend(apiKey: "sk", baseURL: "api.anthropic.com")
+    expect!(
+        (
+            outcome(broken.encode("m", request, false))
+        ) == "AIError.InvalidEndpoint(\"api.anthropic.com\")"
+    )
+}

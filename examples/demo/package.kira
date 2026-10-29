@@ -1,0 +1,13 @@
+//! One real streamed completion, from whichever service a key is set for.
+/// A demo of the SDK: one generation through a backend, printed as it streams.
+construct Demo extends Package {
+    let version: String = "0.2.0"
+    let kind: PackageKind = .App
+    let moduleRoot: String = "Demo"
+    let dependencies: [Dependency] = [
+        Dependency { name: "AI", path: "../../core" },
+        Dependency { name: "AIOpenAI", path: "../../openai" },
+        Dependency { name: "AIOpenRouter", path: "../../openrouter" },
+        Dependency { name: "AIAnthropic", path: "../../anthropic" }
+    ]
+}

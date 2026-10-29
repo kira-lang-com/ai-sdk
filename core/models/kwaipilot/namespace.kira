@@ -1,0 +1,6 @@
+//! The kwaipilot model names, mapped to the SDK's canonical model constants.
+/// The models of Kwaipilot KAT, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.Kwaipilot.KAT {
+    let CoderProV2 = KATCoderProV2
+    let CoderProV25 = KATCoderProV25
+}

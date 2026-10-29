@@ -1,0 +1,69 @@
+//! The google model names, mapped to the SDK's canonical model constants.
+/// The models of Google Gemini, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Models.Google.Gemini {
+    let v2_5 = Gemini25Pro
+    let v3 = Gemini3FlashPreview
+}
+
+/// The models of Google Gemini 2.5, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemini.v2_5 {
+    let Flash = Gemini25Flash
+    let FlashLite = Gemini25FlashLite
+    let Pro = Gemini25Pro
+    let ProPreview = Gemini25ProPreview
+    let ProPreview0506 = Gemini25ProPreview0506
+}
+
+/// The models of Google Gemini 3, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemini.v3 {
+    let FlashPreview = Gemini3FlashPreview
+}
+
+/// The models of Google Gemini 3.1, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemini.v3_1 {
+    let FlashLite = Gemini31FlashLite
+    let FlashLitePreview = Gemini31FlashLitePreview
+    let ProPreview = Gemini31ProPreview
+    let ProPreviewCustomTools = Gemini31ProPreviewCustomTools
+}
+
+/// The models of Google Gemini 3.5, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemini.v3_5 {
+    let Flash = Gemini35Flash
+    let FlashLite = Gemini35FlashLite
+}
+
+/// The models of Google Gemini 3.6, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemini.v3_6 {
+    let Flash = Gemini36Flash
+}
+
+/// The models of Google Gemini 3.7, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemini.v3_7 {
+    let Flash = Gemini37Flash
+}
+
+/// The models of Google Gemini 3.8, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemini.v3_8 {
+    let Flash = Gemini38Flash
+}
+
+/// The models of Google Gemma 2, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemma.v2 {
+    let Gemma27bIt = Gemma227bIt
+}
+
+/// The models of Google Gemma 3, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemma.v3 {
+    let Gemma12bIt = Gemma312bIt
+    let Gemma27bIt = Gemma327bIt
+    let Gemma4bIt = Gemma34bIt
+}
+
+/// The models of Google Gemma 4, each a constant the SDK catalogue names, with its identity and endpoints.
+namespace AI.Providers.Google.Gemma.v4 {
+    let Gemma26bA4bIt = Gemma426bA4bIt
+    let Gemma31bIt = Gemma431bIt
+    let Gemma26bA4bItFree = Gemma426bA4bItFree
+    let Gemma31bItFree = Gemma431bItFree
+}

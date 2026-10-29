@@ -1,0 +1,11 @@
+//! The canonical layer: what a model *is*, what a request *says*, and the one
+//! backend shape everything else conforms to. Nothing here knows a wire format;
+//! the bytes travel through `Network`, which the gateway drives.
+/// The canonical AI layer: the request, model and backend shapes every protocol conforms to.
+///
+/// The package holds no wire format. Protocols are separate packages that implement [`Backend`].
+construct AI extends Package {
+    let version: String = "0.2.0"
+    let kind: PackageKind = .Library
+    let moduleRoot: String = "AI"
+}

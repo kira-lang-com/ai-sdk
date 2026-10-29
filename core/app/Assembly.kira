@@ -1,0 +1,219 @@
+//! Putting a streamed answer back together.
+//!
+//! Every protocol streams the same few things: runs of text, runs of
+//! reasoning, and tool calls whose arguments arrive as fragments of JSON text.
+//! A backend names each run by a key of its own choosing (Anthropic's block
+//! index, OpenAI's tool-call index) and reports pieces as they come; the
+//! assembly turns them into canonical `StreamEvent`s and, at the end, the
+//! `Response` a non-streaming call would have returned. So the backends share
+//! one assembler instead of each writing its own.
+
+import Foundation
+
+/// The kinds of run a streamed answer is made of: text, reasoning, or a tool call.
+public enum RunKind {
+    Text
+    Reasoning
+    Tool
+}
+
+/// A run that has started and not yet ended.
+public struct OpenRun {
+    let key: String
+    let kind: RunKind
+    // The pieces, joined once when the run ends rather than copied on every
+    // delta.
+    var pieces: [String] = []
+    var signature: String? = .None
+    let id: String = ""
+    let name: String = ""
+}
+
+/// The streamed answer being put back together: its open runs and the output they have produced so far.
+///
+/// A stream arrives as fragments; each run is opened once and closed once, and its text is appended as it comes.
+public struct StreamAssembly {
+    let model: Model
+    var open: [OpenRun] = []
+    var output: [Output] = []
+    var usage: Usage = Usage {}
+    var finish: FinishReason? = .None
+    var servedModel: String? = .None
+    // The protocol's own end marker arrived: the answer is whole even if the
+    // connection has not said so yet.
+    var ended: Bool = false
+
+    /// The index in `open` of the run that `key` names, or `.None` when no run is open under it.
+    function runIndex(borrow self, key: borrow String) -> Number? {
+        for (index, run) in open.enumerated() {
+            if run.key == key { return .Some(index) }
+        }
+        return .None
+    }
+
+    /// A piece of text in run `key`, which starts it if it is new. An empty
+    /// piece only starts it.
+    function text(borrow mut self, key: borrow String, delta: borrow String) -> [StreamEvent] {
+        var events: [StreamEvent] = []
+        if runIndex(key).isNone() {
+            open.append(OpenRun { key: copy key, kind: .Text })
+            events.append(.TextStart)
+        }
+        add(key, delta)
+        if delta.count > 0 { events.append(.TextDelta(TextPart { text: copy delta })) }
+        return events
+    }
+
+    /// A piece of reasoning in run `key`, which starts it if it is new.
+    function reasoning(borrow mut self, key: borrow String, delta: borrow String) -> [StreamEvent] {
+        var events: [StreamEvent] = []
+        if runIndex(key).isNone() {
+            open.append(OpenRun { key: copy key, kind: .Reasoning })
+            events.append(.ReasoningStart)
+        }
+        add(key, delta)
+        if delta.count > 0 { events.append(.ReasoningDelta(Reasoning { text: copy delta })) }
+        return events
+    }
+
+    /// A piece of open run `key`.
+    function add(borrow mut self, key: borrow String, delta: borrow String) {
+        match runIndex(key) {
+            Some(index) -> open[index].pieces.append(copy delta)
+            None -> {}
+        }
+    }
+
+    /// The seal over reasoning run `key`, which arrives after its text.
+    function sign(borrow mut self, key: borrow String, signature: borrow String) {
+        match runIndex(key) {
+            Some(index) -> {
+                let earlier = match open[index].signature {
+                    Some(value) -> value
+                    None -> ""
+                }
+                open[index].signature = .Some(earlier + signature)
+            }
+            None -> {
+                open.append(
+                    OpenRun { key: copy key, kind: .Reasoning, signature: .Some(copy signature) }
+                )
+            }
+        }
+    }
+
+    /// Tool call `id` named `name` starting as run `key`. A protocol that
+    /// repeats the opening for a run already open is ignored.
+    function toolStart(
+        borrow mut self,
+        key: borrow String,
+        id: borrow String,
+        name: borrow String
+    ) -> [StreamEvent] {
+        if runIndex(key).isSome() { return [] }
+        open.append(OpenRun { key: copy key, kind: .Tool, id: copy id, name: copy name })
+        return [.ToolCallStart(ToolCallOpened { id: copy id, name: copy name })]
+    }
+
+    /// A fragment of the arguments of tool run `key`.
+    function toolInput(
+        borrow mut self,
+        key: borrow String,
+        delta: borrow String
+    ) -> Result<[StreamEvent], AIError> {
+        let index = match runIndex(key) {
+            Some(value) -> value
+            None -> return .Error(.Malformed("tool arguments for a call that never started"))
+        }
+        if delta.count == 0 { return .Ok([]) }
+        open[index].pieces.append(copy delta)
+        return .Ok([.ToolCallDelta(ToolInputDelta { id: copy open[index].id, json: copy delta })])
+    }
+
+    /// Ends run `key`; its output joins the answer in the order runs end.
+    function close(borrow mut self, key: borrow String) -> Result<[StreamEvent], AIError> {
+        let index = match runIndex(key) {
+            Some(value) -> value
+            None -> return .Ok([])
+        }
+        let run = copy open[index]
+        var rest: [OpenRun] = []
+        for (position, other) in open.enumerated() {
+            if position != index { rest.append(copy other) }
+        }
+        open = rest
+        let whole = joined(run.pieces, "")
+        match run.kind {
+            Text -> {
+                output.append(.Text(TextPart { text: whole }))
+                return .Ok([.TextEnd])
+            }
+            Reasoning -> {
+                output.append(.Reason(Reasoning { text: whole, signature: copy run.signature }))
+                return .Ok([.ReasoningEnd])
+            }
+            Tool -> {}
+        }
+        // A call with no arguments sends none at all.
+        let text = whole.trim().count == 0 ? "{}" : whole
+        let input = match parseJson(text) {
+            Ok(value) -> value
+            Error(problem) -> return .Error(
+                .Malformed("the arguments of \(run.name) are not JSON: \(traceText(problem))")
+            )
+        }
+        let call = ToolCall { id: run.id, name: run.name, input: input }
+        output.append(.Call(copy call))
+        return .Ok([.ToolCallEnd(call)])
+    }
+
+    /// Ends every open run, in the order they started.
+    function closeAll(borrow mut self) -> Result<[StreamEvent], AIError> {
+        var events: [StreamEvent] = []
+        while open.count > 0 {
+            let key = copy open[0].key
+            let closed = try close(key)
+            events.appendAll(closed)
+        }
+        return .Ok(events)
+    }
+
+    /// Usage the service reported, over what it reported before: a protocol
+    /// that sends input tokens at the start and output tokens at the end
+    /// reports each once.
+    function report(borrow mut self, reported: borrow Usage) {
+        usage = Usage {
+            inputTokens: either(reported.inputTokens, usage.inputTokens),
+            outputTokens: either(reported.outputTokens, usage.outputTokens),
+            cacheReadTokens: either(reported.cacheReadTokens, usage.cacheReadTokens),
+            cacheWriteTokens: either(reported.cacheWriteTokens, usage.cacheWriteTokens),
+            reasoningTokens: either(reported.reasoningTokens, usage.reasoningTokens),
+            cost: either(reported.cost, usage.cost)
+        }
+    }
+
+    /// The answer as a `Response`, once every run has ended. An answer that ran
+    /// out of room before it said anything is `Truncated`, not an empty
+    /// success.
+    function completion(borrow self) -> Result<Response, AIError> {
+        let reason = match finish {
+            Some(value) -> value
+            None -> FinishReason.Completed
+        }
+        if output.count == 0 && reason == .Length { return .Error(.Truncated(usage.outputTokens)) }
+        return .Ok(
+            Response {
+                model: copy model,
+                output: copy output,
+                usage: copy usage,
+                finishReason: reason,
+                servedModel: copy servedModel
+            }
+        )
+    }
+}
+
+/// The newer of two reports of one number.
+public function either(newer: borrow Number?, older: borrow Number?) -> Number? {
+    return newer.isSome() ? copy newer : copy older
+}

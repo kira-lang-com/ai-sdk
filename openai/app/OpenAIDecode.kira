@@ -1,0 +1,145 @@
+//! Reading what a chat-completions service sends back: a whole completion, an
+//! error document, or the chunks of a streamed one.
+
+import Foundation
+import AI
+import Network as Net
+
+/// A whole completion, or the error document that came instead.
+public function openaiDecode(
+    status: Number,
+    body: borrow [UN8],
+    model: borrow Model
+) -> Result<Response, AIError> {
+    if !succeeded(status) && body.count == 0 { return .Error(.Status(status)) }
+    let document = match parseBody(body) {
+        Ok(value) -> value
+        Error(problem) -> {
+            if !succeeded(status) { return .Error(.Status(status)) }
+            return .Error(problem)
+        }
+    }
+    let error = jsonAt(document, "error")
+    if !error.isNull() || !succeeded(status) { return .Error(openaiFailure(status, error)) }
+    let choices = jsonItems(document, "choices")
+    if choices.count == 0 { return .Error(.Malformed("the answer carries no choices")) }
+    let message = jsonAt(choices[0], "message")
+    var assembly = StreamAssembly { model: copy model }
+    let thought = reasoningOf(message)
+    if thought.count > 0 { assembly.output.append(.Reason(Reasoning { text: thought })) }
+    let content = jsonText(message, "content")
+    if content.count > 0 { assembly.output.append(.Text(TextPart { text: content })) }
+    for call in jsonItems(message, "tool_calls") {
+        let invoked = jsonAt(call, "function")
+        let input = try argumentsOf(jsonText(invoked, "name"), jsonText(invoked, "arguments"))
+        assembly.output.append(
+            .Call(
+                ToolCall { id: jsonText(call, "id"), name: jsonText(invoked, "name"), input: input }
+            )
+        )
+    }
+    assembly.report(openaiUsage(jsonAt(document, "usage")))
+    assembly.finish = .Some(openaiFinish(jsonText(choices[0], "finish_reason")))
+    assembly.servedModel = jsonOptionalText(document, "model")
+    return assembly.completion()
+}
+
+/// A call's arguments, which the protocol carries as JSON text.
+public function argumentsOf(name: borrow String, text: borrow String) -> Result<JsonValue, AIError> {
+    if text.trim().count == 0 { return .Ok(.Object([])) }
+    return match parseJson(text) {
+        Ok(value) -> .Ok(value)
+        Error(problem) -> .Error(
+            .Malformed("the arguments of \(name) are not JSON: \(traceText(problem))")
+        )
+    }
+}
+
+/// Reasoning, under whichever name the service gives it.
+public function reasoningOf(message: borrow JsonValue) -> String {
+    let named = jsonText(message, "reasoning_content")
+    return named.count > 0 ? named : jsonText(message, "reasoning")
+}
+
+/// The service's error object as a failure.
+public function openaiFailure(status: Number, error: borrow JsonValue) -> AIError {
+    let message = jsonText(error, "message")
+    if message.count == 0 { return .Status(status) }
+    let kind = jsonText(error, "type")
+    return .Service(ServiceFailure { status: status, kind: kind, message: message })
+}
+
+/// One chunk of a streamed completion. Text and reasoning are one run each;
+/// each tool call is a run keyed by its index. A run ends when the next kind
+/// begins, so output keeps the order the model wrote it in.
+public function openaiEvent(
+    event: borrow Net.ServerEvent,
+    assembly: borrow mut StreamAssembly
+) -> Result<[StreamEvent], AIError> {
+    if event.data == "[DONE]" {
+        assembly.ended = true
+        return .Ok([])
+    }
+    let chunk = match parseJson(event.data) {
+        Ok(value) -> value
+        Error(problem) -> return .Error(.Malformed("a chunk is not JSON: \(traceText(problem))"))
+    }
+    let error = jsonAt(chunk, "error")
+    if !error.isNull() { return .Error(openaiFailure(200, error)) }
+    if assembly.servedModel.isNone() { assembly.servedModel = jsonOptionalText(chunk, "model") }
+    let usage = jsonAt(chunk, "usage")
+    if !usage.isNull() { assembly.report(openaiUsage(usage)) }
+    let choices = jsonItems(chunk, "choices")
+    if choices.count == 0 { return .Ok([]) }
+    let delta = jsonAt(choices[0], "delta")
+    var events: [StreamEvent] = []
+    let thought = reasoningOf(delta)
+    if thought.count > 0 { events.appendAll(assembly.reasoning("reasoning", thought)) }
+    let content = jsonText(delta, "content")
+    if content.count > 0 {
+        events.appendAll(try assembly.close("reasoning"))
+        events.appendAll(assembly.text("text", content))
+    }
+    for call in jsonItems(delta, "tool_calls") {
+        let key = match jsonNumber(call, "index") {
+            Some(index) -> "tool \(index)"
+            None -> "tool 0"
+        }
+        let invoked = jsonAt(call, "function")
+        match jsonOptionalText(call, "id") {
+            Some(id) -> {
+                events.appendAll(try assembly.close("reasoning"))
+                events.appendAll(try assembly.close("text"))
+                events.appendAll(assembly.toolStart(key, id, jsonText(invoked, "name")))
+            }
+            None -> {}
+        }
+        events.appendAll(try assembly.toolInput(key, jsonText(invoked, "arguments")))
+    }
+    match jsonOptionalText(choices[0], "finish_reason") {
+        Some(reason) -> assembly.finish = .Some(openaiFinish(reason))
+        None -> {}
+    }
+    return .Ok(events)
+}
+
+/// The usage block. OpenRouter adds its own `cost`.
+public function openaiUsage(usage: borrow JsonValue) -> Usage {
+    return Usage {
+        inputTokens: jsonNumber(usage, "prompt_tokens"),
+        outputTokens: jsonNumber(usage, "completion_tokens"),
+        cacheReadTokens: jsonNumber(jsonAt(usage, "prompt_tokens_details"), "cached_tokens"),
+        reasoningTokens: jsonNumber(jsonAt(usage, "completion_tokens_details"), "reasoning_tokens"),
+        cost: jsonNumber(usage, "cost")
+    }
+}
+
+/// The canonical finish reason a `finish_reason` names.
+public function openaiFinish(text: borrow String) -> FinishReason {
+    return match text {
+        "length" -> .Length
+        "tool_calls" -> .ToolCall
+        "content_filter" -> .Refusal
+        else -> .Completed
+    }
+}

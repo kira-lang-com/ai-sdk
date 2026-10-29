@@ -1,0 +1,117 @@
+//! The one shape every backend conforms to.
+//!
+//! A `Backend` is a codec for one protocol at one place: it knows the service
+//! it is, the protocol it speaks and the region it stands in, and it turns a
+//! canonical request into an HTTP request and the service's bytes back into
+//! canonical values. It never touches a socket. The `Gateway` sends what a
+//! backend encodes through `Network` and hands back what arrives, so a backend
+//! is tested with byte vectors alone, and every backend streams, multiplexes
+//! and speaks HTTP/3 or HTTP/1.1 the same way.
+//!
+//! This is a construct family: `OpenAIBackend`, `AnthropicBackend` and
+//! `OpenRouterBackend` each extend it. Routing holds them as `Any Backend` and
+//! reads the required fields through that existential.
+
+import Foundation
+import Network as Net
+
+/// A codec for one protocol at one place: it turns a canonical request into the HTTP request for its service, and the service's bytes back into canonical values.
+///
+/// It never touches a socket; `Gateway` sends what a backend encodes.
+///
+/// This is a construct family: `OpenAIBackend`, `AnthropicBackend` and `OpenRouterBackend` each extend it. Routing holds them as `Any Backend` and reads the required fields through that existential.
+public construct Backend {
+    // Where this backend sends: the destination half of a binding match.
+    @Required let service: Service
+    // The wire dialect this backend speaks: the protocol half of the match.
+    @Required let protocol: Protocol
+    // Where this backend stands, when it stands anywhere in particular.
+    // Unplaced backends serve only region-free bindings; see
+    // `regionCompatible`.
+    let region: Region? = .None
+
+    // The HTTP request for one generation. `modelID` is the id the route
+    // resolved to, the string this service knows the model by; `stream` asks
+    // for the answer as server-sent events.
+    @Required function encode(
+        modelID: borrow String,
+        request: borrow Request,
+        stream: Bool
+    ) -> Result<Net.Request, AIError>
+
+    // A whole answer: the status and body of a non-streaming exchange, or the
+    // error document a streaming one got instead of events.
+    @Required function decode(
+        status: Number,
+        body: borrow [UN8],
+        model: borrow Model
+    ) -> Result<Response, AIError>
+
+    // One server-sent event of a streamed answer, folded into `assembly`;
+    // the canonical events it produced.
+    @Required function decodeEvent(
+        event: borrow Net.ServerEvent,
+        assembly: borrow mut StreamAssembly
+    ) -> Result<[StreamEvent], AIError>
+}
+
+/// A POST of `document` to `base` followed by `path`.
+///
+/// A key crosses TLS or it does not cross: with `credential` set, a base that
+/// is not `https` is refused before anything is built, because a bearer token
+/// in cleartext is a leaked token. The credential's field is marked sensitive,
+/// so it is never compressed into a shared table or recorded by a tap.
+public function postJson(
+    base: borrow String,
+    path: borrow String,
+    credential: borrow Net.Field?,
+    fields: borrow [Net.Field],
+    document: borrow JsonValue,
+    stream: Bool
+) -> Result<Net.Request, AIError> {
+    let target = match Net.targetOf(base + path) {
+        Some(value) -> value
+        None -> return .Error(.InvalidEndpoint(copy base))
+    }
+    var headers = Net.Fields {}
+    headers.add("content-type", "application/json")
+    headers.add("accept", stream ? "text/event-stream" : "application/json")
+    match credential {
+        Some(field) -> {
+            if target.scheme != "https" {
+                return .Error(
+                    .InvalidEndpoint("\(base) is not https, and a key must not travel in cleartext")
+                )
+            }
+            headers.entries.append(
+                Net.Field {
+                    name: field.name.lowercased(),
+                    value: copy field.value,
+                    sensitive: true
+                }
+            )
+        }
+        None -> {}
+    }
+    for field in fields { headers.add(field.name, field.value) }
+    return .Ok(
+        Net.Request {
+            method: .Post,
+            target: target,
+            fields: headers,
+            body: .Bytes(jsonBytes(document))
+        }
+    )
+}
+
+/// The credential field for `key`, or none when there is no key, as a local
+/// server without authentication has.
+public function credentialField(name: borrow String, key: borrow String) -> Net.Field? {
+    if key.count == 0 { return .None }
+    return .Some(Net.Field { name: copy name, value: copy key, sensitive: true })
+}
+
+/// Whether a status is a success.
+public function succeeded(status: Number) -> Bool {
+    return status >= 200 && status < 300
+}
