@@ -2,7 +2,7 @@
 //! the chat-completions shape in between. `AIOpenRouter` builds on it.
 /// The OpenAI protocol package: a backend that speaks the OpenAI chat-completions API and its compatible services.
 construct AIOpenAI extends Package {
-    let version: String = "0.2.0"
+    let version: String = "26.10.4"
     let kind: PackageKind = .Library
     let moduleRoot: String = "AIOpenAI"
     let dependencies: [Dependency] = [

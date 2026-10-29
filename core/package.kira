@@ -5,7 +5,7 @@
 ///
 /// The package holds no wire format. Protocols are separate packages that implement [`Backend`].
 construct AI extends Package {
-    let version: String = "0.2.0"
+    let version: String = "26.10.4"
     let kind: PackageKind = .Library
     let moduleRoot: String = "AI"
 }
