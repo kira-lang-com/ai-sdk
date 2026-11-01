@@ -1,5 +1,10 @@
 # 26.10.4
 
+**Project:** Kira Model SDK  
+**Release week:** 2026-10-26 – 2026-11-01
+
+## Highlights
+
 The first source release of the Kira model SDK includes:
 
 - Canonical model, request, response, and backend interfaces, with routing and local request validation in the gateway.
