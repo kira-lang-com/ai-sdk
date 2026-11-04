@@ -1,12 +1,8 @@
-# 26.10.4
+# 26.11.1
 
 **Project:** Kira Model SDK  
-**Release week:** 2026-10-26 – 2026-11-01
+**Release week:** 2026-11-02 – 2026-11-08
 
 ## Highlights
 
-The first source release of the Kira model SDK includes:
-
-- Canonical model, request, response, and backend interfaces, with routing and local request validation in the gateway.
-- OpenAI, OpenAI-compatible, OpenRouter, and Anthropic backends, with protocol codecs separated from transport.
-- Streaming through Kira's Network library, using HTTP/3 over QUIC or HTTP/1.1 over TLS.
+No changes to this package's source files have landed since the `26.10.4` release baseline. This weekly source release updates version metadata only where the package declares a version; it does not claim new functionality or fresh build validation.
